@@ -6,6 +6,13 @@ It allows taking screenshots of windows, regions and monitors which are saved to
 
 ## Installation
 
+## Dependencies
+
+- hyprland (this one should be obvious)
+- grim     (to take the screenshot)
+- slurp    (to select what to screenshot)
+- wl-copy  (to copy screenshot to clipboard)
+
 ### Manual
 
 To install manually, simply clone this repo and copy/symlink the `hyprshot` script to a folder in your `PATH`:
