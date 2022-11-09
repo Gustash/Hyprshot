@@ -8,10 +8,11 @@ It allows taking screenshots of windows, regions and monitors which are saved to
 
 ## Dependencies
 
-- hyprland (this one should be obvious)
-- grim     (to take the screenshot)
-- slurp    (to select what to screenshot)
-- wl-copy  (to copy screenshot to clipboard)
+- hyprland      (this one should be obvious)
+- jq            (to parse and manipulate json)
+- grim          (to take the screenshot)
+- slurp         (to select what to screenshot)
+- wl-clipboard  (to copy screenshot to clipboard)
 
 ### Manual
 
