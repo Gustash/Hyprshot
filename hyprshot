@@ -31,6 +31,9 @@ function save_geometry() {
         mkdir -p "$SAVEDIR"
         grim -g "${1}" "$SAVE_FULLPATH"
         wl-copy < "$SAVE_FULLPATH"
+        notify-send "Screenshot saved" \
+                    "Image saved in <i>$SAVE_FULLPATH</i> and copied to the clipboard." \
+                    -i "$SAVE_FULLPATH"
     else
         wl-copy < <(grim -g "${1}" -)
     fi
