@@ -47,6 +47,31 @@ $ hyprshot -m output --clipboard-only
 
 ## Configuration
 
+You can add the various modes as keybindings in your Hyprland config like so:
+
+```
+# ~/.config/hypr/hyprland.conf
+
+...
+
+# Screenshot a window
+bind = $mainMod, PRINT, exec, hyprshot -m window
+# Screenshot a monitor
+bind = , PRINT, exec, hyprshot -m output
+# Screenshot a region
+bind = $shiftMod, PRINT, exec, hyprshot -m region
+```
+
+This would allow you to:
+
+Take a screenshot of a window by using `MOD + PrintScr`
+
+Take a screenshot of a monitor by using `PrintScr`
+
+Take a screenshot of a region by using `MOD + Shift + PrintScr`
+
+## Save location
+
 You can choose which directory Hyprshot will save screenshots in by setting an `HYPRSHOT_DIR` environment variable to your preferred location.
 
 If `HYPRSHOT_DIR` is not set, Hyprshot will attempt to save to `XDG_PICTURES_DIR` and will further fallback to your home directory if this is also not available.
