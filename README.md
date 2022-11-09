@@ -6,6 +6,10 @@ It allows taking screenshots of windows, regions and monitors which are saved to
 
 ## Installation
 
+# Arch Linux
+
+You can install the [hyprshot](https://aur.archlinux.org/packages/hyprshot) package in AUR.
+
 ## Dependencies
 
 - hyprland      (this one should be obvious)
