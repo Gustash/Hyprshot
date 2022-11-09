@@ -17,6 +17,7 @@ You can install the [hyprshot](https://aur.archlinux.org/packages/hyprshot) pack
 - grim          (to take the screenshot)
 - slurp         (to select what to screenshot)
 - wl-clipboard  (to copy screenshot to clipboard)
+- libnotify     (to get notified when a screenshot is saved)
 
 ### Manual
 
