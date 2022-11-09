@@ -1,0 +1,127 @@
+#!/usr/bin/env sh
+
+AVAILABLE_MODES=(output window region)
+
+function Help() {
+    cat <<EOF
+Usage: hyprshot [options ..] -m [mode]
+
+Hyprshot is an utility to easily take screenshot in Hyprland using your mouse.
+
+It allows taking screenshots of windows, regions and monitors which are saved to a folder of your choosing and copied to your clipboard.
+
+Options:
+  -h, --help            show help message
+  -m, --mode            one of: output, window, region
+  -o, --output-folder   directory in which to save screenshot
+  -f, --filename        the file name of the resulting screenshot
+  --clipboard-only      copy screenshot to clipboard and don't save image in disk
+
+Modes:
+  output                take screenshot of an entire monitor
+  window                take screenshot of an open window
+  region                take screenshot of selected region
+EOF
+}
+
+function save_geometry() {
+    [ -z "${1}" ] && echo 'no geometry' && exit 1;
+
+    if [ $CLIPBOARD -eq 0 ]; then
+        mkdir -p "$SAVEDIR"
+        grim -g "${1}" "$SAVE_FULLPATH"
+        wl-copy < "$SAVE_FULLPATH"
+    else
+        wl-copy < <(grim -g "${1}" -)
+    fi
+}
+
+function begin_grab() {
+    local option=$1
+    case $option in
+        output)
+            local geometry=`slurp -or`
+            ;;
+        region)
+            local geometry=`slurp -d`
+            ;;
+        window)
+            local geometry=`grab_window`
+            ;;
+    esac
+    save_geometry "${geometry}"
+}
+
+function grab_window() {
+    # SELECTION is an array where the first element is the
+    # selected x coordinate and the second element is the
+    # selected y coordinate.
+    local selection=(`slurp -pf "%x %y" 2>/dev/null`)
+
+    [ -z $selection ] && echo canceled && exit 1;
+
+    local x=${selection[0]}
+    local y=${selection[1]}
+    local client=`hyprctl -j clients | jq -r '[.[] | select(.workspace.id | contains('$(hyprctl -j monitors | jq -r 'map(.activeWorkspace.id) | join(",")')')) | select(.at[0] <= '$x' and '$x' <= .at[0] + .size[0] and .at[1] <= '$y' and '$y' <= .at[1] + .size[1])] | last'`
+    echo $client | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"'
+}
+
+function args() {
+    local options=$(getopt -o hf:o:m: --long help,filename:,output-folder:,mode:,clipboard-only -- "$@")
+    [ $? -eq 0 ] || {
+        echo "Invalid option provided"
+        exit 2
+    }
+    eval set -- "$options"
+    while true; do
+        case "$1" in
+            -h | --help)
+                Help
+                exit
+                ;;
+            -o | --output-folder)
+                shift;
+                SAVEDIR=$1
+                ;;
+            -f | --filename)
+                shift;
+                FILENAME=$1
+                ;;
+            -m | --mode)
+                shift;
+                echo "${AVAILABLE_MODES[@]}" | grep -wq $1
+                local check=$?
+                [ $check -eq 0 ] || {
+                    printf "Unknown mode: %s\n\nAvailable modes are:\n\toutput\n\tregion\n\twindow\n" "$1"
+                    exit 2
+                }
+                OPTION=$1;;
+            --clipboard-only)
+                CLIPBOARD=1
+                ;;
+            --)
+                shift
+                break;;
+        esac
+        shift
+    done
+
+    [ -z $OPTION ] && {
+        printf "A mode is required\n\nAvailable modes are:\n\toutput\n\tregion\n\twindow\n"
+        exit 2
+    }
+}
+
+[ -z $1 ] && {
+    Help
+    exit
+}
+
+CLIPBOARD=0
+FILENAME="$(date +'%Y-%m-%d-%H%M%S_hyprshot.png')"
+[ -z "$HYPRSHOT_DIR" ] && SAVEDIR=${XDG_PICTURES_DIR:=~} || SAVEDIR=${HYPRSHOT_DIR}
+
+args $0 "$@"
+SAVE_FULLPATH="$SAVEDIR/$FILENAME"
+[ $CLIPBOARD -eq 0 ] && printf "Saving in: %s\n" "$SAVE_FULLPATH"
+begin_grab $OPTION
