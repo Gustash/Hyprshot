@@ -18,6 +18,12 @@ $ chmod +x Hyprshot/hyprshot
 
 ## Usage
 
+You can get help on how to use hyprshot by executing:
+
+```bash
+$ hyprshot -h
+```
+
 The simplest usage of Hyprshot is executing it with one of the available modes.
 
 For example, to screenshot an open window:
