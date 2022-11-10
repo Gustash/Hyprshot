@@ -15,6 +15,7 @@ Options:
   -m, --mode            one of: output, window, region
   -o, --output-folder   directory in which to save screenshot
   -f, --filename        the file name of the resulting screenshot
+  -d, --debug           print debug information
   --clipboard-only      copy screenshot to clipboard and don't save image in disk
   -- [command]          open screenshot with a command of your choosing. e.g. hyprshot -m window -- mirage
 
@@ -25,18 +26,23 @@ Modes:
 EOF
 }
 
+function Print() {
+    [ $DEBUG -eq 1 ] && printf "$@" >&2 
+}
+
 function save_geometry() {
-    [ -z "${1}" ] && echo 'no geometry' && exit 1;
+    [ -z "${1}" ] && Print "no geometry\n" && exit 1;
 
     if [ $CLIPBOARD -eq 0 ]; then
         mkdir -p "$SAVEDIR"
         grim -g "${1}" "$SAVE_FULLPATH"
-        wl-copy < "$SAVE_FULLPATH"
+        local output="$SAVE_FULLPATH"
+        wl-copy < "$output"
         notify-send "Screenshot saved" \
-                    "Image saved in <i>$SAVE_FULLPATH</i> and copied to the clipboard." \
-                    -i "$SAVE_FULLPATH"
+                    "Image saved in <i>$output</i> and copied to the clipboard." \
+                    -i "$output"
         [ -z "$COMMAND" ] || {
-            "$COMMAND" "$SAVE_FULLPATH"
+            "$COMMAND" "$output"
         }
     else
         wl-copy < <(grim -g "${1}" -)
@@ -74,9 +80,9 @@ function grab_window() {
 }
 
 function args() {
-    local options=$(getopt -o hf:o:m: --long help,filename:,output-folder:,mode:,clipboard-only -- "$@")
+    local options=$(getopt -o hf:o:m:d --long help,filename:,output-folder:,mode:,clipboard-only,debug -- "$@")
     [ $? -eq 0 ] || {
-        echo "Invalid option provided"
+        Print "Invalid option provided\n"
         exit 2
     }
     eval set -- "$options"
@@ -99,12 +105,15 @@ function args() {
                 echo "${AVAILABLE_MODES[@]}" | grep -wq $1
                 local check=$?
                 [ $check -eq 0 ] || {
-                    printf "Unknown mode: %s\n\nAvailable modes are:\n\toutput\n\tregion\n\twindow\n" "$1"
+                    Print "Unknown mode: %s\n\nAvailable modes are:\n\toutput\n\tregion\n\twindow\n" "$1"
                     exit 2
                 }
                 OPTION=$1;;
             --clipboard-only)
                 CLIPBOARD=1
+                ;;
+            -d | --debug)
+                DEBUG=1
                 ;;
             --)
                 shift # Skip -- argument
@@ -115,7 +124,7 @@ function args() {
     done
 
     [ -z $OPTION ] && {
-        printf "A mode is required\n\nAvailable modes are:\n\toutput\n\tregion\n\twindow\n"
+        Print "A mode is required\n\nAvailable modes are:\n\toutput\n\tregion\n\twindow\n"
         exit 2
     }
 }
@@ -126,10 +135,11 @@ function args() {
 }
 
 CLIPBOARD=0
+DEBUG=0
 FILENAME="$(date +'%Y-%m-%d-%H%M%S_hyprshot.png')"
 [ -z "$HYPRSHOT_DIR" ] && SAVEDIR=${XDG_PICTURES_DIR:=~} || SAVEDIR=${HYPRSHOT_DIR}
 
 args $0 "$@"
 SAVE_FULLPATH="$SAVEDIR/$FILENAME"
-[ $CLIPBOARD -eq 0 ] && printf "Saving in: %s\n" "$SAVE_FULLPATH"
+[ $CLIPBOARD -eq 0 ] && Print "Saving in: %s\n" "$SAVE_FULLPATH"
 begin_grab $OPTION
