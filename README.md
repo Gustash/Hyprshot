@@ -1,5 +1,9 @@
 # Hyprshot
 
+![AUR version](https://img.shields.io/aur/version/hyprshot)
+![AUR git version](https://img.shields.io/aur/version/hyprshot-git)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/Gustash/hyprshot)
+
 Hyprshot is an utility to easily take screenshot in Hyprland using your mouse.
 
 It allows taking screenshots of windows, regions and monitors which are saved to a folder of your choosing and copied to your clipboard.
