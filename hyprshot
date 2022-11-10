@@ -66,17 +66,12 @@ function begin_grab() {
 }
 
 function grab_window() {
-    # SELECTION is an array where the first element is the
-    # selected x coordinate and the second element is the
-    # selected y coordinate.
-    local selection=(`slurp -pf "%x %y" 2>/dev/null`)
-
-    [ -z $selection ] && exit 1;
-
-    local x=${selection[0]}
-    local y=${selection[1]}
-    local client=`hyprctl -j clients | jq -r '[.[] | select(.workspace.id | contains('$(hyprctl -j monitors | jq -r 'map(.activeWorkspace.id) | join(",")')')) | select(.at[0] <= '$x' and '$x' <= .at[0] + .size[0] and .at[1] <= '$y' and '$y' <= .at[1] + .size[1])] | last'`
-    echo $client | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"'
+    local clients=`hyprctl -j clients | jq -r '[.[] | select(.workspace.id | contains('$(hyprctl -j monitors | jq -r 'map(.activeWorkspace.id) | join(",")')'))] | reverse'`
+    # Generate boxes for each visible window and send that to slurp
+    # through stdin
+    local boxes="$(echo $clients | jq -r '.[] | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')"
+    Print "Boxes:\n%s\n" "$boxes"
+    slurp -r <<< "$boxes" 2>/dev/null
 }
 
 function args() {
