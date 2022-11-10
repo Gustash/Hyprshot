@@ -4,7 +4,7 @@ AVAILABLE_MODES=(output window region)
 
 function Help() {
     cat <<EOF
-Usage: hyprshot [options ..] -m [mode]
+Usage: hyprshot [options ..] -m [mode] -- [command]
 
 Hyprshot is an utility to easily take screenshot in Hyprland using your mouse.
 
@@ -16,6 +16,7 @@ Options:
   -o, --output-folder   directory in which to save screenshot
   -f, --filename        the file name of the resulting screenshot
   --clipboard-only      copy screenshot to clipboard and don't save image in disk
+  -- [command]          open screenshot with a command of your choosing. e.g. hyprshot -m window -- mirage
 
 Modes:
   output                take screenshot of an entire monitor
@@ -34,6 +35,9 @@ function save_geometry() {
         notify-send "Screenshot saved" \
                     "Image saved in <i>$SAVE_FULLPATH</i> and copied to the clipboard." \
                     -i "$SAVE_FULLPATH"
+        [ -z "$COMMAND" ] || {
+            "$COMMAND" "$SAVE_FULLPATH"
+        }
     else
         wl-copy < <(grim -g "${1}" -)
     fi
@@ -61,7 +65,7 @@ function grab_window() {
     # selected y coordinate.
     local selection=(`slurp -pf "%x %y" 2>/dev/null`)
 
-    [ -z $selection ] && echo canceled && exit 1;
+    [ -z $selection ] && exit 1;
 
     local x=${selection[0]}
     local y=${selection[1]}
@@ -103,7 +107,8 @@ function args() {
                 CLIPBOARD=1
                 ;;
             --)
-                shift
+                shift # Skip -- argument
+                COMMAND=${@:2}
                 break;;
         esac
         shift
