@@ -1,8 +1,8 @@
 # Hyprshot
 
-[![AUR version](https://img.shields.io/aur/version/hyprshot)](https://aur.archlinux.org/packages/hyprshot)
-[![AUR git version](https://img.shields.io/aur/version/hyprshot-git)](https://aur.archlinux.org/packages/hyprshot-git)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/Gustash/hyprshot)](https://github.com/Gustash/hyprshot/releases/latest)
+[![AUR version](https://img.shields.io/aur/version/hyprshot?label=hyprshot)](https://aur.archlinux.org/packages/hyprshot)
+[![AUR git version](https://img.shields.io/aur/version/hyprshot-git?label=hyprshot-git)](https://aur.archlinux.org/packages/hyprshot-git)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/Gustash/hyprshot?color=green)](https://github.com/Gustash/hyprshot/releases/latest)
 
 Hyprshot is an utility to easily take screenshot in Hyprland using your mouse.
 
