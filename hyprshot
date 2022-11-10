@@ -37,6 +37,9 @@ function save_geometry() {
         mkdir -p "$SAVEDIR"
         grim -g "${1}" "$SAVE_FULLPATH"
         local output="$SAVE_FULLPATH"
+        # Trim transparent pixels, in case the window was floating and partially
+        # outside the monitor
+        convert $output -trim +repage $output
         wl-copy < "$output"
         notify-send "Screenshot saved" \
                     "Image saved in <i>$output</i> and copied to the clipboard." \
@@ -45,7 +48,7 @@ function save_geometry() {
             "$COMMAND" "$output"
         }
     else
-        wl-copy < <(grim -g "${1}" -)
+        wl-copy < <(grim -g "${1}" - | convert - -trim +repage -)
     fi
 }
 
@@ -66,12 +69,15 @@ function begin_grab() {
 }
 
 function grab_window() {
-    local clients=`hyprctl -j clients | jq -r '[.[] | select(.workspace.id | contains('$(hyprctl -j monitors | jq -r 'map(.activeWorkspace.id) | join(",")')'))] | reverse'`
+    local monitors=`hyprctl -j monitors`
+    local clients=`hyprctl -j clients | jq -r '[.[] | select(.workspace.id | contains('$(echo $monitors | jq -r 'map(.activeWorkspace.id) | join(",")')'))]'`
+    Print "Monitors: %s\n" "$monitors"
+    Print "Clients: %s\n" "$clients"
     # Generate boxes for each visible window and send that to slurp
     # through stdin
-    local boxes="$(echo $clients | jq -r '.[] | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')"
+    local boxes="$(echo $clients | jq -r '.[] | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1]) \(.title)"')"
     Print "Boxes:\n%s\n" "$boxes"
-    slurp -r <<< "$boxes" 2>/dev/null
+    slurp -r <<< "$boxes"
 }
 
 function args() {
