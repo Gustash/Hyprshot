@@ -19,6 +19,7 @@ Options:
   -f, --filename        the file name of the resulting screenshot
   -d, --debug           print debug information
   -s, --silent          don't send notification when screenshot is saved
+  --raw                 output raw image data to stdout
   --clipboard-only      copy screenshot to clipboard and don't save image in disk
   -- [command]          open screenshot with a command of your choosing. e.g. hyprshot -m window -- mirage
 
@@ -49,20 +50,24 @@ function send_notification() {
 function save_geometry() {
     Print "Geometry: %s\n" "${1}"
 
-    if [ $CLIPBOARD -eq 0 ]; then
-        mkdir -p "$SAVEDIR"
-        grim -g "${1}" "$SAVE_FULLPATH"
-        local output="$SAVE_FULLPATH"
-        # Trim transparent pixels, in case the window was floating and partially
-        # outside the monitor
-        convert $output -trim +repage $output
-        wl-copy < "$output"
-        send_notification $output
-        [ -z "$COMMAND" ] || {
-            "$COMMAND" "$output"
-        }
+    if [ $RAW -eq 0 ]; then
+        if [ $CLIPBOARD -eq 0 ]; then
+            mkdir -p "$SAVEDIR"
+            grim -g "${1}" "$SAVE_FULLPATH"
+            local output="$SAVE_FULLPATH"
+            # Trim transparent pixels, in case the window was floating and partially
+            # outside the monitor
+            convert $output -trim +repage $output
+            wl-copy < "$output"
+            send_notification $output
+            [ -z "$COMMAND" ] || {
+                "$COMMAND" "$output"
+            }
+        else
+            wl-copy < <(grim -g "${1}" - | convert - -trim +repage -)
+        fi
     else
-        wl-copy < <(grim -g "${1}" - | convert - -trim +repage -)
+        grim -g "${1}" - | convert - -trim +repage -
     fi
 }
 
@@ -103,7 +108,7 @@ function grab_window() {
 }
 
 function args() {
-    local options=$(getopt -o hf:o:m:ds --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent -- "$@")
+    local options=$(getopt -o hf:o:m:ds --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,raw -- "$@")
     eval set -- "$options"
 
     while true; do
@@ -133,6 +138,9 @@ function args() {
             -s | --silent)
                 SILENT=1
                 ;;
+            --raw)
+                RAW=1
+                ;;
             --)
                 shift # Skip -- argument
                 COMMAND=${@:2}
@@ -155,6 +163,7 @@ fi
 CLIPBOARD=0
 DEBUG=0
 SILENT=0
+RAW=0
 FILENAME="$(date +'%Y-%m-%d-%H%M%S_hyprshot.png')"
 [ -z "$HYPRSHOT_DIR" ] && SAVEDIR=${XDG_PICTURES_DIR:=~} || SAVEDIR=${HYPRSHOT_DIR}
 
