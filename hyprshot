@@ -41,9 +41,15 @@ function send_notification() {
     if [ $SILENT -eq 1 ]; then
         return 0
     fi
-    notify-send "Screenshot saved" \
+    
+    if [ -z $1 ]; then
+        notify-send "Screenshot saved" \
+                "Image copied to the clipboard."
+    else
+        notify-send "Screenshot saved" \
                 "Image saved in <i>${1}</i> and copied to the clipboard." \
                 -i "${1}" -a Hyprshot
+    fi
 }
 
 function save_geometry() {
