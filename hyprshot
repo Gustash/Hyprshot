@@ -69,6 +69,7 @@ function save_geometry() {
         }
     else
         wl-copy < <(grim -g "${1}" - | convert - -trim +repage -)
+        send_notification
     fi
 }
 
