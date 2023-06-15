@@ -41,29 +41,35 @@ function send_notification() {
     if [ $SILENT -eq 1 ]; then
         return 0
     fi
+
+    local message=$([ $CLIPBOARD -eq 1 ] && \
+        echo "Image copied to the clipboard" || \
+        echo "Image saved in <i>${1}</i> and copied to the clipboard.")
     notify-send "Screenshot saved" \
-                "Image saved in <i>${1}</i> and copied to the clipboard." \
+                "${message}" \
                 -i "${1}" -a Hyprshot
 }
 
 function save_geometry() {
     Print "Geometry: %s\n" "${1}"
+    local output=""
 
     if [ $CLIPBOARD -eq 0 ]; then
         mkdir -p "$SAVEDIR"
         grim -g "${1}" "$SAVE_FULLPATH"
-        local output="$SAVE_FULLPATH"
+        output="$SAVE_FULLPATH"
         # Trim transparent pixels, in case the window was floating and partially
         # outside the monitor
         convert $output -trim +repage $output
         wl-copy < "$output"
-        send_notification $output
         [ -z "$COMMAND" ] || {
             "$COMMAND" "$output"
         }
     else
         wl-copy < <(grim -g "${1}" - | convert - -trim +repage -)
     fi
+
+    send_notification $output
 }
 
 function begin_grab() {
