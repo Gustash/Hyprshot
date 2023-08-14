@@ -2,7 +2,7 @@
 
 set -e
 
-AVAILABLE_MODES=(output window region)
+AVAILABLE_MODES=(output window region select)
 
 function Help() {
     cat <<EOF
@@ -14,7 +14,7 @@ It allows taking screenshots of windows, regions and monitors which are saved to
 
 Options:
   -h, --help            show help message
-  -m, --mode            one of: output, window, region
+  -m, --mode            one of: output, window, region, select
   -o, --output-folder   directory in which to save screenshot
   -f, --filename        the file name of the resulting screenshot
   -d, --debug           print debug information
@@ -27,6 +27,7 @@ Modes:
   output                take screenshot of an entire monitor
   window                take screenshot of an open window
   region                take screenshot of selected region
+  select                select mode with wofi
 EOF
 }
 
@@ -94,6 +95,9 @@ function begin_grab() {
         window)
             local geometry=`grab_window`
             ;;
+        select)
+            local geometry=`grab_select`
+            ;;
     esac
     save_geometry "${geometry}"
 }
@@ -116,6 +120,26 @@ function grab_window() {
     local boxes="$(echo $clients | jq -r '.[] | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1]) \(.title)"')"
     Print "Boxes:\n%s\n" "$boxes"
     slurp -r <<< "$boxes"
+}
+
+function grab_select() {
+    local choice
+    choice=$(echo -e "o => Output\nw => Window\nr => Region" | wofi -n --dmenu --width 13% --lines 6 --prompt="Hyprshot Mode Selection")
+    
+    case $choice in
+        "o => Output")
+            grab_output
+            ;;
+        "w => Window")
+            grab_window
+            ;;
+        "r => Region")
+            grab_region
+            ;;
+        *)
+            exit 1
+            ;;
+    esac
 }
 
 function args() {
