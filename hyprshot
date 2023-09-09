@@ -20,6 +20,7 @@ Options:
   -d, --debug           print debug information
   -s, --silent          don't send notification when screenshot is saved
   -r, --raw             output raw image data to stdout
+  -t, --notif-timeout         notification timeout in milliseconds (default 5000)
   --clipboard-only      copy screenshot to clipboard and don't save image in disk
   -- [command]          open screenshot with a command of your choosing. e.g. hyprshot -m window -- mirage
 
@@ -48,7 +49,7 @@ function send_notification() {
         echo "Image saved in <i>${1}</i> and copied to the clipboard.")
     notify-send "Screenshot saved" \
                 "${message}" \
-                -i "${1}" -a Hyprshot
+                -t "$NOTIF_TIMEOUT" -i "${1}" -a Hyprshot
 }
 
 function trim() {
@@ -119,7 +120,7 @@ function grab_window() {
 }
 
 function args() {
-    local options=$(getopt -o hf:o:m:dsr --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,raw -- "$@")
+    local options=$(getopt -o hf:o:m:dsrt: --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,raw,notif-timeout: -- "$@")
     eval set -- "$options"
 
     while true; do
@@ -152,6 +153,10 @@ function args() {
             -r | --raw)
                 RAW=1
                 ;;
+            -t | --notif-timeout)
+                shift;
+                NOTIF_TIMEOUT=$1
+                ;;
             --)
                 shift # Skip -- argument
                 COMMAND=${@:2}
@@ -175,6 +180,7 @@ CLIPBOARD=0
 DEBUG=0
 SILENT=0
 RAW=0
+NOTIF_TIMEOUT=5000
 FILENAME="$(date +'%Y-%m-%d-%H%M%S_hyprshot.png')"
 [ -z "$HYPRSHOT_DIR" ] && SAVEDIR=${XDG_PICTURES_DIR:=~} || SAVEDIR=${HYPRSHOT_DIR}
 
