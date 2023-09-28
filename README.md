@@ -16,13 +16,12 @@ You can install the [hyprshot](https://aur.archlinux.org/packages/hyprshot) pack
 
 ### Dependencies
 
-- hyprland      (this one should be obvious)
-- jq            (to parse and manipulate json)
-- grim          (to take the screenshot)
-- slurp         (to select what to screenshot)
-- wl-clipboard  (to copy screenshot to clipboard)
-- libnotify     (to get notified when a screenshot is saved)
-- imagemagick   (to trim excess transparent pixels when window is partially off-screen)
+- hyprland (this one should be obvious)
+- jq (to parse and manipulate json)
+- grim (to take the screenshot)
+- slurp (to select what to screenshot)
+- wl-clipboard (to copy screenshot to clipboard)
+- libnotify (to get notified when a screenshot is saved)
 
 ### Manual
 

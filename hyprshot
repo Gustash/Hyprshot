@@ -54,7 +54,7 @@ function send_notification() {
 }
 
 function trim() {
-    local geometry="${2}"
+    local geometry="${1}"
     local xy_str=$(echo "${geometry}" | cut -d' ' -f1)
     local wh_str=$(echo "${geometry}" | cut -d' ' -f2)
     local x=`echo "${xy_str}" | cut -d',' -f1`
@@ -65,56 +65,55 @@ function trim() {
     local max_width=`hyprctl monitors -j | jq '[.[] | (.x + .width)] | max'`
     local max_height=`hyprctl monitors -j | jq '[.[] | (.y + .height)] | max'`
 
-    local crop_width=0
-    local crop_height=0
-    local x_off=0
-    local y_off=0
+    local cropped_x=$x
+    local cropped_y=$y
+    local cropped_width=$width
+    local cropped_height=$height
+
     if ((x < 0)); then
-        # Window starts to the left of the left-most screen
-        crop_width=$((width + x))
-        x_off=$((-1 * x))
-    elif ((x + width > max_width)); then
-        local w_crop=$((x + width - max_width))
-        crop_width=$((width - w_crop))
+        cropped_x=0
+        cropped_width=$((width + x))
     fi
     if ((y < 0)); then
-        # Window starts above the top-most screen
-        crop_height=$((height + y))
-        y_off=$((-1 * y))
-    elif ((y + height > max_height)); then
-        local h_crop=$((y + height - max_height))
-        crop_height=$((height - h_crop))
+        cropped_y=0
+        cropped_height=$((height + y))
     fi
 
-    local crop=`printf "%sx%s+%s+%s" \
-        "${crop_width}" "${crop_height}" \
-        "${x_off}" "${y_off}"`
-    Print "Crop: %s\n" "${crop}"
-    convert "${1}" -crop "${crop}" "${1}"
+    if ((x + width > max_width)); then
+        local w_crop=$((x + width - max_width))
+        cropped_width=$((cropped_width - w_crop))
+    fi
+    if ((y + height > max_height)); then
+        local h_crop=$((y + height - max_height))
+        cropped_height=$((cropped_height - h_crop))
+    fi
+
+    printf "%s,%s %sx%s\n" \
+        "${cropped_x}" "${cropped_y}" \
+        "${cropped_width}" "${cropped_height}"
 }
 
 function save_geometry() {
     Print "Geometry: %s\n" "${1}"
+    local cropped_geometry=`trim "${1}"`
+    Print "Crop: %s\n" "${cropped_geometry}"
     local output=""
 
     if [ $RAW -eq 1 ]; then
-        grim -g "${1}" - | trim - "${1}"
+        grim -g "${cropped_geometry}" -
         return 0
     fi
 
     if [ $CLIPBOARD -eq 0 ]; then
         mkdir -p "$SAVEDIR"
-        grim -g "${1}" "$SAVE_FULLPATH"
+        grim -g "${cropped_geometry}" "$SAVE_FULLPATH"
         output="$SAVE_FULLPATH"
-        # Trim transparent pixels, in case the window was floating and partially
-        # outside the monitor
-        trim "${output}" "${1}"
         wl-copy < "$output"
         [ -z "$COMMAND" ] || {
             "$COMMAND" "$output"
         }
     else
-        wl-copy < <(grim -g "${1}" - | trim - "${1}")
+        wl-copy < <(grim -g "${cropped_geometry}" -)
     fi
 
     send_notification $output
