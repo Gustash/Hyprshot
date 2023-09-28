@@ -2,33 +2,40 @@
 
 set -e
 
-AVAILABLE_MODES=(output window region)
-
 function Help() {
     cat <<EOF
-Usage: hyprshot [options ..] -m [mode] -- [command]
+Usage: hyprshot [options ..] [-m [mode] ..] -- [command]
 
 Hyprshot is an utility to easily take screenshot in Hyprland using your mouse.
 
 It allows taking screenshots of windows, regions and monitors which are saved to a folder of your choosing and copied to your clipboard.
 
+Examples:
+  capture a window                      \`hyprshot -m window\`
+  capture active window to clipboard    \`hyprshot -m window -m active --clipboard-only\`
+  capture selected monitor              \`hyprshot -m output -m DP-1\`
+
 Options:
-  -h, --help            show help message
-  -m, --mode            one of: output, window, region
-  -o, --output-folder   directory in which to save screenshot
-  -f, --filename        the file name of the resulting screenshot
-  -d, --debug           print debug information
-  -s, --silent          don't send notification when screenshot is saved
-  -r, --raw             output raw image data to stdout
-  -t, --notif-timeout   notification timeout in milliseconds (default 5000)
-  -c, --current         select active window/output (not applicable to region)
-  --clipboard-only      copy screenshot to clipboard and don't save image in disk
-  -- [command]          open screenshot with a command of your choosing. e.g. hyprshot -m window -- mirage
+  -h, --help                show help message
+  -m, --mode                one of: output, window, region, active, OUTPUT_NAME
+  -o, --output-folder       directory in which to save screenshot
+  -f, --filename            the file name of the resulting screenshot
+  -d, --debug               print debug information
+  -s, --silent              don't send notification when screenshot is saved
+  -r, --raw                 output raw image data to stdout
+  -t, --notif-timeout       notification timeout in milliseconds (default 5000)
+  --clipboard-only          copy screenshot to clipboard and don't save image in disk
+  -- [command]              open screenshot with a command of your choosing. e.g. hyprshot -m window -- mirage
 
 Modes:
-  output                take screenshot of an entire monitor
-  window                take screenshot of an open window
-  region                take screenshot of selected region
+  output        take screenshot of an entire monitor
+  window        take screenshot of an open window
+  region        take screenshot of selected region
+  active        take screenshot of active window|output
+                (you must use --mode again with the intended selection)
+  OUTPUT_NAME   take screenshot of output with OUTPUT_NAME
+                (you must use --mode again with the intended selection)
+                (you can get this from \`hyprctl monitors\`)
 EOF
 }
 
@@ -62,8 +69,8 @@ function trim() {
     local width=`echo "${wh_str}" | cut -dx -f1`
     local height=`echo "${wh_str}" | cut -dx -f2`
 
-    local max_width=`hyprctl monitors -j | jq '[.[] | (.x + .width)] | max'`
-    local max_height=`hyprctl monitors -j | jq '[.[] | (.y + .height)] | max'`
+    local max_width=`hyprctl monitors -j | jq -r '[.[] | (.x + .width)] | max'`
+    local max_height=`hyprctl monitors -j | jq -r '[.[] | (.y + .height)] | max'`
 
     local cropped_x=$x
     local cropped_y=$y
@@ -123,8 +130,10 @@ function begin_grab() {
         output)
             if [ $CURRENT -eq 1 ]; then
                 local geometry=`grab_active_output`
-            else
+            elif [ -z $SELECTED_MONITOR ]; then
                 local geometry=`grab_output`
+            else
+                local geometry=`grab_selected_output $SELECTED_MONITOR`
             fi
             ;;
         region)
@@ -155,6 +164,12 @@ function grab_active_output() {
     echo $current_monitor | jq -r '"\(.x),\(.y) \(.width)x\(.height)"'
 }
 
+function grab_selected_output() {
+    local monitor=`hyprctl -j monitors | jq -r '.[] | select(.name == "'$(echo $1)'")'`
+    Print "Capturing: %s\n" "${1}"
+    echo $monitor | jq -r '"\(.x),\(.y) \(.width)x\(.height)"'
+}
+
 function grab_region() {
     slurp -d
 }
@@ -178,8 +193,25 @@ function grab_active_window() {
     echo "$box"
 }
 
+function parse_mode() {
+    local mode="${1}"
+
+    case $mode in
+        window | region | output)
+            OPTION=$mode
+            ;;
+        active)
+            CURRENT=1
+            ;;
+        *)
+            hyprctl monitors -j | jq -re '.[] | select(.name == "'$(echo $mode)'")' &>/dev/null
+            SELECTED_MONITOR=$mode
+            ;;
+    esac
+}
+
 function args() {
-    local options=$(getopt -o hf:o:m:dsrt:c --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,raw,notif-timeout:,current -- "$@")
+    local options=$(getopt -o hf:o:m:dsrt: --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,raw,notif-timeout: -- "$@")
     eval set -- "$options"
 
     while true; do
@@ -198,8 +230,8 @@ function args() {
                 ;;
             -m | --mode)
                 shift;
-                echo "${AVAILABLE_MODES[@]}" | grep -wq $1
-                OPTION=$1;;
+                parse_mode $1
+                ;;
             --clipboard-only)
                 CLIPBOARD=1
                 ;;
@@ -215,9 +247,6 @@ function args() {
             -t | --notif-timeout)
                 shift;
                 NOTIF_TIMEOUT=$1
-                ;;
-            -c | --current)
-                CURRENT=1
                 ;;
             --)
                 shift # Skip -- argument
