@@ -20,6 +20,8 @@ Options:
   -d, --debug           print debug information
   -s, --silent          don't send notification when screenshot is saved
   -r, --raw             output raw image data to stdout
+  -t, --notif-timeout   notification timeout in milliseconds (default 5000)
+  -c, --current         select active window/output (not applicable to region)
   --clipboard-only      copy screenshot to clipboard and don't save image in disk
   -- [command]          open screenshot with a command of your choosing. e.g. hyprshot -m window -- mirage
 
@@ -48,7 +50,7 @@ function send_notification() {
         echo "Image saved in <i>${1}</i> and copied to the clipboard.")
     notify-send "Screenshot saved" \
                 "${message}" \
-                -i "${1}" -a Hyprshot
+                -t "$NOTIF_TIMEOUT" -i "${1}" -a Hyprshot
 }
 
 function trim() {
@@ -86,13 +88,21 @@ function begin_grab() {
     local option=$1
     case $option in
         output)
-            local geometry=`grab_output`
+            if [ $CURRENT -eq 1 ]; then
+                local geometry=`grab_active_output`
+            else
+                local geometry=`grab_output`
+            fi
             ;;
         region)
             local geometry=`grab_region`
             ;;
         window)
-            local geometry=`grab_window`
+            if [ $CURRENT -eq 1 ]; then
+                local geometry=`grab_active_window`
+            else
+                local geometry=`grab_window`
+            fi
             ;;
     esac
     save_geometry "${geometry}"
@@ -100,6 +110,16 @@ function begin_grab() {
 
 function grab_output() {
     slurp -or
+}
+
+function grab_active_output() {
+    local active_workspace=`hyprctl -j activeworkspace`
+    local monitors=`hyprctl -j monitors`
+    Print "Monitors: %s\n" "$monitors"
+    Print "Active workspace: %s\n" "$active_workspace"
+    local current_monitor="$(echo $monitors | jq -r 'first(.[] | select(.activeWorkspace.id == '$(echo $active_workspace | jq -r '.id')'))')"
+    Print "Current output: %s\n" "$current_monitor"
+    echo $current_monitor | jq -r '"\(.x),\(.y) \(.width)x\(.height)"'
 }
 
 function grab_region() {
@@ -118,8 +138,15 @@ function grab_window() {
     slurp -r <<< "$boxes"
 }
 
+function grab_active_window() {
+    local active_window=`hyprctl -j activewindow`
+    local box=$(echo $active_window | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')
+    Print "Box:\n%s\n" "$box"
+    echo "$box"
+}
+
 function args() {
-    local options=$(getopt -o hf:o:m:dsr --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,raw -- "$@")
+    local options=$(getopt -o hf:o:m:dsrt:c --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,raw,notif-timeout:,current -- "$@")
     eval set -- "$options"
 
     while true; do
@@ -152,6 +179,13 @@ function args() {
             -r | --raw)
                 RAW=1
                 ;;
+            -t | --notif-timeout)
+                shift;
+                NOTIF_TIMEOUT=$1
+                ;;
+            -c | --current)
+                CURRENT=1
+                ;;
             --)
                 shift # Skip -- argument
                 COMMAND=${@:2}
@@ -175,6 +209,8 @@ CLIPBOARD=0
 DEBUG=0
 SILENT=0
 RAW=0
+NOTIF_TIMEOUT=5000
+CURRENT=0
 [ -z "$XDG_PICTURES_DIR" ] && type xdg-user-dir &> /dev/null && XDG_PICTURES_DIR=$(xdg-user-dir PICTURES)
 FILENAME="$(date +'%Y-%m-%d-%H%M%S_hyprshot.png')"
 [ -z "$HYPRSHOT_DIR" ] && SAVEDIR=${XDG_PICTURES_DIR:=~} || SAVEDIR=${HYPRSHOT_DIR}
