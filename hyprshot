@@ -70,22 +70,20 @@ function trim() {
     local cropped_width=$width
     local cropped_height=$height
 
+    if ((x + width > max_width)); then
+        cropped_width=$((max_width - x))
+    fi
+    if ((y + height > max_height)); then
+        cropped_height=$((max_height - y))
+    fi
+
     if ((x < 0)); then
         cropped_x=0
-        cropped_width=$((width + x))
+        cropped_width=$((cropped_width + x))
     fi
     if ((y < 0)); then
         cropped_y=0
-        cropped_height=$((height + y))
-    fi
-
-    if ((x + width > max_width)); then
-        local w_crop=$((x + width - max_width))
-        cropped_width=$((cropped_width - w_crop))
-    fi
-    if ((y + height > max_height)); then
-        local h_crop=$((y + height - max_height))
-        cropped_height=$((cropped_height - h_crop))
+        cropped_height=$((cropped_height + y))
     fi
 
     printf "%s,%s %sx%s\n" \
