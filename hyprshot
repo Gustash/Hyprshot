@@ -136,7 +136,6 @@ function begin_grab() {
         hyprpicker -r -z &
         sleep 0.2
         HYPRPICKER_PID=$!
-        echo "initialized!"
     fi
     local option=$1
     case $option in
