@@ -223,7 +223,7 @@ function parse_mode() {
 }
 
 function args() {
-    local options=$(getopt -o hf:o:m:dsFrt --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,freeze,raw,notif-timeout: -- "$@")
+    local options=$(getopt -o hf:o:m:dsFr:t: --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,freeze,raw,notif-timeout: -- "$@")
     eval set -- "$options"
 
     while true; do
