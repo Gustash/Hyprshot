@@ -20,6 +20,7 @@ Options:
   -m, --mode                one of: output, window, region, active, OUTPUT_NAME
   -o, --output-folder       directory in which to save screenshot
   -f, --filename            the file name of the resulting screenshot
+  -F, --freeze              freeze the screen on initialization
   -d, --debug               print debug information
   -s, --silent              don't send notification when screenshot is saved
   -r, --raw                 output raw image data to stdout
@@ -124,7 +125,19 @@ function save_geometry() {
     send_notification $output
 }
 
+function killHyprpicker() {
+    if [ ! $HYPRPICKER_PID -eq -1 ]; then
+        kill $HYPRPICKER_PID
+    fi
+}
+
 function begin_grab() {
+    if [ $FREEZE -eq 1 ] && [ "$(command -v "hyprpicker")" ] >/dev/null 2>&1; then
+        hyprpicker -r -z &
+        sleep 0.2
+        HYPRPICKER_PID=$!
+        echo "initialized!"
+    fi
     local option=$1
     case $option in
         output)
@@ -211,7 +224,7 @@ function parse_mode() {
 }
 
 function args() {
-    local options=$(getopt -o hf:o:m:dsrt: --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,raw,notif-timeout: -- "$@")
+    local options=$(getopt -o hf:o:m:dsFrt --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,freeze,raw,notif-timeout: -- "$@")
     eval set -- "$options"
 
     while true; do
@@ -237,6 +250,9 @@ function args() {
                 ;;
             -d | --debug)
                 DEBUG=1
+                ;;
+            -F | --freeze)
+                FREEZE=1
                 ;;
             -s | --silent)
                 SILENT=1
@@ -273,6 +289,7 @@ SILENT=0
 RAW=0
 NOTIF_TIMEOUT=5000
 CURRENT=0
+FREEZE=0
 [ -z "$XDG_PICTURES_DIR" ] && type xdg-user-dir &> /dev/null && XDG_PICTURES_DIR=$(xdg-user-dir PICTURES)
 FILENAME="$(date +'%Y-%m-%d-%H%M%S_hyprshot.png')"
 [ -z "$HYPRSHOT_DIR" ] && SAVEDIR=${XDG_PICTURES_DIR:=~} || SAVEDIR=${HYPRSHOT_DIR}
@@ -282,3 +299,4 @@ args $0 "$@"
 SAVE_FULLPATH="$SAVEDIR/$FILENAME"
 [ $CLIPBOARD -eq 0 ] && Print "Saving in: %s\n" "$SAVE_FULLPATH"
 begin_grab $OPTION
+killHyprpicker
