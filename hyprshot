@@ -161,13 +161,13 @@ function grab_active_output() {
     Print "Active workspace: %s\n" "$active_workspace"
     local current_monitor="$(echo $monitors | jq -r 'first(.[] | select(.activeWorkspace.id == '$(echo $active_workspace | jq -r '.id')'))')"
     Print "Current output: %s\n" "$current_monitor"
-    echo $current_monitor | jq -r '"\(.x),\(.y) \(.width)x\(.height)"'
+    echo $current_monitor | jq -r '"\(.x),\(.y) \(.width/.scale|round)x\(.height/.scale|round)"'
 }
 
 function grab_selected_output() {
     local monitor=`hyprctl -j monitors | jq -r '.[] | select(.name == "'$(echo $1)'")'`
     Print "Capturing: %s\n" "${1}"
-    echo $monitor | jq -r '"\(.x),\(.y) \(.width)x\(.height)"'
+    echo $monitor | jq -r '"\(.x),\(.y) \(.width/.scale|round)x\(.height/.scale|round)"'
 }
 
 function grab_region() {
