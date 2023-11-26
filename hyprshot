@@ -69,8 +69,8 @@ function trim() {
     local width=`echo "${wh_str}" | cut -dx -f1`
     local height=`echo "${wh_str}" | cut -dx -f2`
 
-    local max_width=`hyprctl monitors -j | jq -r '[.[] | (.x + .width)] | max'`
-    local max_height=`hyprctl monitors -j | jq -r '[.[] | (.y + .height)] | max'`
+    local max_width=`hyprctl monitors -j | jq -r '[.[] | if (.transform % 2 == 0) then (.x + .width) else (.x + .height) end] | max'`
+    local max_height=`hyprctl monitors -j | jq -r '[.[] | if (.transform % 2 == 0) then (.y + .height) else (.y + .width) end] | max'`
 
     local cropped_x=$x
     local cropped_y=$y
