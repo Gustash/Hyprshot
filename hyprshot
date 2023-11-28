@@ -98,6 +98,28 @@ function trim() {
         "${cropped_width}" "${cropped_height}"
 }
 
+function save_all() {
+    Print "Screenshotting all monitors"
+    if [ $RAW -eq 1 ]; then
+        grim -
+        return 0
+    fi
+
+    if [ $CLIPBOARD -eq 0 ]; then
+        mkdir -p "$SAVEDIR"
+        grim "$SAVE_FULLPATH"
+        output="$SAVE_FULLPATH"
+        wl-copy < "$output"
+        [ -z "$COMMAND" ] || {
+            "$COMMAND" "$output"
+        }
+    else
+        wl-copy < <(grim -)
+    fi
+
+    send_notification $output
+}
+
 function save_geometry() {
     Print "Geometry: %s\n" "${1}"
     local cropped_geometry=`trim "${1}"`
@@ -145,6 +167,10 @@ function begin_grab() {
             else
                 local geometry=`grab_window`
             fi
+            ;;
+        all)
+            save_all
+            return
             ;;
     esac
     save_geometry "${geometry}"
@@ -197,7 +223,7 @@ function parse_mode() {
     local mode="${1}"
 
     case $mode in
-        window | region | output)
+        window | region | output | all)
             OPTION=$mode
             ;;
         active)
@@ -282,3 +308,4 @@ args $0 "$@"
 SAVE_FULLPATH="$SAVEDIR/$FILENAME"
 [ $CLIPBOARD -eq 0 ] && Print "Saving in: %s\n" "$SAVE_FULLPATH"
 begin_grab $OPTION
+
