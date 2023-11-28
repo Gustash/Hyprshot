@@ -17,7 +17,7 @@ Examples:
 
 Options:
   -h, --help                show help message
-  -m, --mode                one of: output, window, region, active, OUTPUT_NAME
+  -m, --mode                one of: all, output, window, region, active, OUTPUT_NAME
   -o, --output-folder       directory in which to save screenshot
   -f, --filename            the file name of the resulting screenshot
   -d, --debug               print debug information
@@ -28,6 +28,7 @@ Options:
   -- [command]              open screenshot with a command of your choosing. e.g. hyprshot -m window -- mirage
 
 Modes:
+  all           take screenshot of all monitors
   output        take screenshot of an entire monitor
   window        take screenshot of an open window
   region        take screenshot of selected region
@@ -283,7 +284,7 @@ function args() {
     done
 
     if [ -z $OPTION ]; then
-        Print "A mode is required\n\nAvailable modes are:\n\toutput\n\tregion\n\twindow\n"
+        Print "A mode is required\n\nAvailable modes are:\n\tall\n\toutput\n\tregion\n\twindow\n"
         exit 2
     fi
 }
