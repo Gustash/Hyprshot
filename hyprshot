@@ -24,6 +24,7 @@ Options:
   -s, --silent              don't send notification when screenshot is saved
   -r, --raw                 output raw image data to stdout
   -t, --notif-timeout       notification timeout in milliseconds (default 5000)
+  -z, --freeze              freeze current output to take screenshot
   --clipboard-only          copy screenshot to clipboard and don't save image in disk
   -- [command]              open screenshot with a command of your choosing. e.g. hyprshot -m window -- mirage
 
@@ -126,6 +127,13 @@ function save_geometry() {
 
 function begin_grab() {
     local option=$1
+
+    if [ $FREEZE -eq 1 ]; then
+        hyprpicker -r -z &
+        sleep 0.2
+        local picker_pid=$!
+    fi
+
     case $option in
         output)
             if [ $CURRENT -eq 1 ]; then
@@ -147,7 +155,12 @@ function begin_grab() {
             fi
             ;;
     esac
+
     save_geometry "${geometry}"
+
+    if [ $FREEZE -eq 1 ]; then
+        kill $picker_pid
+    fi
 }
 
 function grab_output() {
@@ -211,7 +224,7 @@ function parse_mode() {
 }
 
 function args() {
-    local options=$(getopt -o hf:o:m:dsrt: --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,raw,notif-timeout: -- "$@")
+    local options=$(getopt -o hf:o:m:dsrt:z --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,raw,notif-timeout:,freeze -- "$@")
     eval set -- "$options"
 
     while true; do
@@ -248,6 +261,9 @@ function args() {
                 shift;
                 NOTIF_TIMEOUT=$1
                 ;;
+            -z | --freeze)
+                FREEZE=1
+                ;;
             --)
                 shift # Skip -- argument
                 COMMAND=${@:2}
@@ -271,6 +287,7 @@ CLIPBOARD=0
 DEBUG=0
 SILENT=0
 RAW=0
+FREEZE=0
 NOTIF_TIMEOUT=5000
 CURRENT=0
 [ -z "$XDG_PICTURES_DIR" ] && type xdg-user-dir &> /dev/null && XDG_PICTURES_DIR=$(xdg-user-dir PICTURES)
