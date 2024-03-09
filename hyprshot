@@ -25,6 +25,7 @@ Options:
   -r, --raw                 output raw image data to stdout
   -t, --notif-timeout       notification timeout in milliseconds (default 5000)
   --clipboard-only          copy screenshot to clipboard and don't save image in disk
+  --no-clipboard            don't copy to clipboard
   -- [command]              open screenshot with a command of your choosing. e.g. hyprshot -m window -- mirage
 
 Modes:
@@ -43,8 +44,8 @@ function Print() {
     if [ $DEBUG -eq 0 ]; then
         return 0
     fi
-    
-    1>&2 printf "$@" 
+
+    1>&2 printf "$@"
 }
 
 function send_notification() {
@@ -113,12 +114,16 @@ function save_geometry() {
         mkdir -p "$SAVEDIR"
         grim -g "${cropped_geometry}" "$SAVE_FULLPATH"
         output="$SAVE_FULLPATH"
-        wl-copy < "$output"
+        if [ $NO_CLIPBOARD -eq 0 ]; then
+            wl-copy < "$output"
+        fi
         [ -z "$COMMAND" ] || {
             "$COMMAND" "$output"
         }
     else
-        wl-copy < <(grim -g "${cropped_geometry}" -)
+        if [ $NO_CLIPBOARD -eq 0 ]; then
+            wl-copy < <(grim -g "${cropped_geometry}" -)
+        fi
     fi
 
     send_notification $output
@@ -211,7 +216,7 @@ function parse_mode() {
 }
 
 function args() {
-    local options=$(getopt -o hf:o:m:dsrt: --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,raw,notif-timeout: -- "$@")
+    local options=$(getopt -o hf:o:m:dsrt: --long help,filename:,output-folder:,mode:,clipboard-only,no-clipboard,debug,silent,raw,notif-timeout: -- "$@")
     eval set -- "$options"
 
     while true; do
@@ -234,6 +239,9 @@ function args() {
                 ;;
             --clipboard-only)
                 CLIPBOARD=1
+                ;;
+            --no-clipboard)
+                NO_CLIPBOARD=1
                 ;;
             -d | --debug)
                 DEBUG=1
@@ -268,6 +276,7 @@ if [ -z $1 ]; then
 fi
 
 CLIPBOARD=0
+NO_CLIPBOARD=0
 DEBUG=0
 SILENT=0
 RAW=0
