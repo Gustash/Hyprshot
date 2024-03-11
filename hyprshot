@@ -8,7 +8,7 @@ Usage: hyprshot [options ..] [-m [mode] ..] -- [command]
 
 Hyprshot is an utility to easily take screenshot in Hyprland using your mouse.
 
-It allows taking screenshots of windows, regions and monitors which are saved to a folder of your choosing and copied to your clipboard.
+It allows taking screenshots of windows, regions and monitors which are saved to a folder of your choosing and can be copied to your clipboard.
 
 Examples:
   capture a window                      \`hyprshot -m window\`
@@ -24,7 +24,8 @@ Options:
   -s, --silent              don't send notification when screenshot is saved
   -r, --raw                 output raw image data to stdout
   -t, --notif-timeout       notification timeout in milliseconds (default 5000)
-  --clipboard-only          copy screenshot to clipboard and don't save image in disk
+  --clipboard-only          (deprecated, use --clipboard-mode instead) copy screenshot to clipboard and don't save image in disk
+  --clipboard-mode          one of: always (default), no, only
   -- [command]              open screenshot with a command of your choosing. e.g. hyprshot -m window -- mirage
 
 Modes:
@@ -43,8 +44,8 @@ function Print() {
     if [ $DEBUG -eq 0 ]; then
         return 0
     fi
-    
-    1>&2 printf "$@" 
+
+    1>&2 printf "$@"
 }
 
 function send_notification() {
@@ -52,7 +53,7 @@ function send_notification() {
         return 0
     fi
 
-    local message=$([ $CLIPBOARD -eq 1 ] && \
+    local message=$([ $CLIPBOARD_MODE = "only" ] && \
         echo "Image copied to the clipboard" || \
         echo "Image saved in <i>${1}</i> and copied to the clipboard.")
     notify-send "Screenshot saved" \
@@ -109,11 +110,13 @@ function save_geometry() {
         return 0
     fi
 
-    if [ $CLIPBOARD -eq 0 ]; then
+    if [ $CLIPBOARD_MODE = "always" ] || [ $CLIPBOARD_MODE = "no"  ]; then
         mkdir -p "$SAVEDIR"
         grim -g "${cropped_geometry}" "$SAVE_FULLPATH"
         output="$SAVE_FULLPATH"
-        wl-copy < "$output"
+        if [ $CLIPBOARD_MODE = "always" ]; then
+            wl-copy < "$output"
+        fi
         [ -z "$COMMAND" ] || {
             "$COMMAND" "$output"
         }
@@ -211,7 +214,7 @@ function parse_mode() {
 }
 
 function args() {
-    local options=$(getopt -o hf:o:m:dsrt: --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,raw,notif-timeout: -- "$@")
+    local options=$(getopt -o hf:o:m:dsrt: --long help,filename:,output-folder:,mode:,clipboard-mode:,clipboard-only,debug,silent,raw,notif-timeout: -- "$@")
     eval set -- "$options"
 
     while true; do
@@ -233,7 +236,11 @@ function args() {
                 parse_mode $1
                 ;;
             --clipboard-only)
-                CLIPBOARD=1
+                CLIPBOARD_MODE="only"
+                ;;
+            --clipboard-mode)
+                shift
+                CLIPBOARD_MODE=$1
                 ;;
             -d | --debug)
                 DEBUG=1
@@ -267,7 +274,7 @@ if [ -z $1 ]; then
     exit
 fi
 
-CLIPBOARD=0
+CLIPBOARD_MODE="always"
 DEBUG=0
 SILENT=0
 RAW=0
@@ -280,5 +287,5 @@ FILENAME="$(date +'%Y-%m-%d-%H%M%S_hyprshot.png')"
 args $0 "$@"
 
 SAVE_FULLPATH="$SAVEDIR/$FILENAME"
-[ $CLIPBOARD -eq 0 ] && Print "Saving in: %s\n" "$SAVE_FULLPATH"
+[ $CLIPBOARD_MODE = "always" ] && Print "Saving in: %s\n" "$SAVE_FULLPATH"
 begin_grab $OPTION
