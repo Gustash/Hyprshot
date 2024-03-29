@@ -72,6 +72,9 @@ function trim() {
     local max_width=`hyprctl monitors -j | jq -r '[.[] | if (.transform % 2 == 0) then (.x + .width) else (.x + .height) end] | max'`
     local max_height=`hyprctl monitors -j | jq -r '[.[] | if (.transform % 2 == 0) then (.y + .height) else (.y + .width) end] | max'`
 
+    local min_x=`hyprctl monitors -j | jq -r '[.[] | (.x)] | min'`
+    local min_y=`hyprctl monitors -j | jq -r '[.[] | (.y)] | min'`
+
     local cropped_x=$x
     local cropped_y=$y
     local cropped_width=$width
@@ -84,13 +87,13 @@ function trim() {
         cropped_height=$((max_height - y))
     fi
 
-    if ((x < 0)); then
-        cropped_x=0
-        cropped_width=$((cropped_width + x))
+    if ((x < min_x)); then
+        cropped_x="$min_x"
+        cropped_width=$((cropped_width + x - min_x))
     fi
-    if ((y < 0)); then
-        cropped_y=0
-        cropped_height=$((cropped_height + y))
+    if ((y < min_y)); then
+        cropped_y="$min_y"
+        cropped_height=$((cropped_height + y - min_y))
     fi
 
     printf "%s,%s %sx%s\n" \
