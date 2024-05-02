@@ -52,7 +52,7 @@ function send_notification() {
         return 0
     fi
 
-    local message=$([ $CLIPBOARD -eq 1 ] && \
+    local message=$([ -z "$1" ] && \
         echo "Image copied to the clipboard" || \
         echo "Image saved in <i>${1}</i> and copied to the clipboard.")
     notify-send "Screenshot saved" \
@@ -104,22 +104,29 @@ function save_geometry() {
     Print "Crop: %s\n" "${cropped_geometry}"
     local output=""
 
-    if [ $RAW -eq 1 ]; then
-        grim -g "${cropped_geometry}" -
-        return 0
-    fi
+    local SCREEN_COMMAND='grim -g '"'${cropped_geometry}'"' -'
 
     if [ $CLIPBOARD -eq 0 ]; then
-        mkdir -p "$SAVEDIR"
-        grim -g "${cropped_geometry}" "$SAVE_FULLPATH"
         output="$SAVE_FULLPATH"
-        wl-copy < "$output"
-        [ -z "$COMMAND" ] || {
-            "$COMMAND" "$output"
-        }
-    else
-        wl-copy < <(grim -g "${cropped_geometry}" -)
+        SCREEN_COMMAND="$SCREEN_COMMAND"' | tee '"'$SAVE_FULLPATH'"
     fi
+
+    SCREEN_COMMAND="$SCREEN_COMMAND"' | tee >(wl-copy)'
+
+    if [ ! -z "$COMMAND" ]; then
+        SCREEN_COMMAND="$SCREEN_COMMAND"'| tee >('"$COMMAND"
+        if [ ! -z "$output" ]; then
+            SCREEN_COMMAND="$SCREEN_COMMAND"' '"$output"
+        fi
+	SCREEN_COMMAND="$SCREEN_COMMAND"')'
+    fi
+
+    if [ $RAW -eq 0 ]; then
+        SCREEN_COMMAND="$SCREEN_COMMAND"' > /dev/null'
+    fi
+
+    Print "Executing %s\n" "$SCREEN_COMMAND"
+    eval "$SCREEN_COMMAND"
 
     send_notification $output
 }
