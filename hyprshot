@@ -19,6 +19,7 @@ Options:
   -h, --help                show help message
   -m, --mode                one of: output, window, region, active, OUTPUT_NAME
   -o, --output-folder       directory in which to save screenshot
+  -C, --move-cursor         move cursor to [X,Y] during screenshot. It will be moved back after.
   -f, --filename            the file name of the resulting screenshot
   -d, --debug               print debug information
   -s, --silent              don't send notification when screenshot is saved
@@ -104,6 +105,18 @@ function save_geometry() {
     Print "Crop: %s\n" "${cropped_geometry}"
     local output=""
 
+    if [ "$CURSOR" != 0 ]; then
+        local cursorpos=`hyprctl cursorpos`
+        local cursor_x=`echo "${cursorpos}" | cut -d',' -f1`
+        local cursor_y=`echo "${cursorpos}" | cut -d',' -d' ' -f2`
+
+        Print "Cursor To: ${CURSOR}\n"
+        local move_x=`echo "${CURSOR}" | cut -d',' -f1`
+        local move_y=`echo "${CURSOR}" | cut -d',' -f2`
+
+        hyprctl dispatch movecursor "${move_x} ${move_y}" >& /dev/null
+    fi
+
     if [ $RAW -eq 1 ]; then
         grim -g "${cropped_geometry}" -
         return 0
@@ -119,6 +132,10 @@ function save_geometry() {
         }
     else
         wl-copy < <(grim -g "${cropped_geometry}" -)
+    fi
+
+    if [ "$CURSOR" != 0 ]; then
+        hyprctl dispatch movecursor "${cursor_x} ${cursor_y}" >& /dev/null
     fi
 
     send_notification $output
@@ -211,7 +228,7 @@ function parse_mode() {
 }
 
 function args() {
-    local options=$(getopt -o hf:o:m:dsrt: --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,raw,notif-timeout: -- "$@")
+    local options=$(getopt -o hf:o:m:C:dsrt: --long help,filename:,output-folder:,mode:,move-cursor:,clipboard-only,debug,silent,raw,notif-timeout: -- "$@")
     eval set -- "$options"
 
     while true; do
@@ -231,6 +248,10 @@ function args() {
             -m | --mode)
                 shift;
                 parse_mode $1
+                ;;
+            -C | --move-cursor)
+                shift;
+                CURSOR=$1
                 ;;
             --clipboard-only)
                 CLIPBOARD=1
@@ -267,6 +288,7 @@ if [ -z $1 ]; then
     exit
 fi
 
+CURSOR=0
 CLIPBOARD=0
 DEBUG=0
 SILENT=0
