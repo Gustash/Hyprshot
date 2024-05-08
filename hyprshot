@@ -125,12 +125,6 @@ function save_geometry() {
     send_notification $output
 }
 
-function killHyprpicker() {
-    if [ ! $HYPRPICKER_PID -eq -1 ]; then
-        kill $HYPRPICKER_PID
-    fi
-}
-
 function checkRunning() {
     sleep 1
     while [[ 1 == 1 ]]; do
@@ -308,4 +302,3 @@ args $0 "$@"
 SAVE_FULLPATH="$SAVEDIR/$FILENAME"
 [ $CLIPBOARD -eq 0 ] && Print "Saving in: %s\n" "$SAVE_FULLPATH"
 begin_grab $OPTION & checkRunning
-killHyprpicker
