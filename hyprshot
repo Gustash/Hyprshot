@@ -131,6 +131,15 @@ function killHyprpicker() {
     fi
 }
 
+function checkRunning() {
+    while [[ 1 == 1 ]]; do
+        if [[ $(pgrep slurp | wc -m) == 0 ]]; then
+            pkill hyprpicker
+            exit
+        fi
+    done
+}
+
 function begin_grab() {
     if [ $FREEZE -eq 1 ] && [ "$(command -v "hyprpicker")" ] >/dev/null 2>&1; then
         hyprpicker -r -z &
@@ -297,5 +306,5 @@ args $0 "$@"
 
 SAVE_FULLPATH="$SAVEDIR/$FILENAME"
 [ $CLIPBOARD -eq 0 ] && Print "Saving in: %s\n" "$SAVE_FULLPATH"
-begin_grab $OPTION
+begin_grab $OPTION & checkRunning
 killHyprpicker
