@@ -20,6 +20,7 @@ Options:
   -m, --mode                one of: output, window, region, active, OUTPUT_NAME
   -o, --output-folder       directory in which to save screenshot
   -f, --filename            the file name of the resulting screenshot
+  -F, --freeze              freeze the screen on initialization
   -d, --debug               print debug information
   -s, --silent              don't send notification when screenshot is saved
   -r, --raw                 output raw image data to stdout
@@ -61,6 +62,7 @@ function send_notification() {
 }
 
 function trim() {
+    Print "Geometry: %s\n" "${1}"
     local geometry="${1}"
     local xy_str=$(echo "${geometry}" | cut -d' ' -f1)
     local wh_str=$(echo "${geometry}" | cut -d' ' -f2)
@@ -93,38 +95,53 @@ function trim() {
         cropped_height=$((cropped_height + y))
     fi
 
-    printf "%s,%s %sx%s\n" \
+    local cropped=`printf "%s,%s %sx%s\n" \
         "${cropped_x}" "${cropped_y}" \
-        "${cropped_width}" "${cropped_height}"
+        "${cropped_width}" "${cropped_height}"`
+    Print "Crop: %s\n" "${cropped}"
+    echo ${cropped}
 }
 
 function save_geometry() {
-    Print "Geometry: %s\n" "${1}"
-    local cropped_geometry=`trim "${1}"`
-    Print "Crop: %s\n" "${cropped_geometry}"
+    local geometry="${1}"
     local output=""
 
     if [ $RAW -eq 1 ]; then
-        grim -g "${cropped_geometry}" -
+        grim -g "${geometry}" -
         return 0
     fi
 
     if [ $CLIPBOARD -eq 0 ]; then
         mkdir -p "$SAVEDIR"
-        grim -g "${cropped_geometry}" "$SAVE_FULLPATH"
+        grim -g "${geometry}" "$SAVE_FULLPATH"
         output="$SAVE_FULLPATH"
         wl-copy --type image/png < "$output"
         [ -z "$COMMAND" ] || {
             "$COMMAND" "$output"
         }
     else
-        wl-copy --type image/png < <(grim -g "${cropped_geometry}" -)
+        wl-copy --type image/png < <(grim -g "${geometry}" -)
     fi
 
     send_notification $output
 }
 
+function checkRunning() {
+    sleep 1
+    while [[ 1 == 1 ]]; do
+        if [[ $(pgrep slurp | wc -m) == 0 ]]; then
+            pkill hyprpicker
+            exit
+        fi
+    done
+}
+
 function begin_grab() {
+    if [ $FREEZE -eq 1 ] && [ "$(command -v "hyprpicker")" ] >/dev/null 2>&1; then
+        hyprpicker -r -z &
+        sleep 0.2
+        HYPRPICKER_PID=$!
+    fi
     local option=$1
     case $option in
         output)
@@ -145,6 +162,7 @@ function begin_grab() {
             else
                 local geometry=`grab_window`
             fi
+	    geometry=`trim "${geometry}"`
             ;;
     esac
     save_geometry "${geometry}"
@@ -181,14 +199,14 @@ function grab_window() {
     Print "Clients: %s\n" "$clients"
     # Generate boxes for each visible window and send that to slurp
     # through stdin
-    local boxes="$(echo $clients | jq -r '.[] | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1]) \(.title)"')"
+    local boxes="$(echo $clients | jq -r '.[] | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1]) \(.title)"' | cut -f1,2 -d' ')"
     Print "Boxes:\n%s\n" "$boxes"
     slurp -r <<< "$boxes"
 }
 
 function grab_active_window() {
     local active_window=`hyprctl -j activewindow`
-    local box=$(echo $active_window | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')
+    local box=$(echo $active_window | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"' | cut -f1,2 -d' ')
     Print "Box:\n%s\n" "$box"
     echo "$box"
 }
@@ -211,7 +229,7 @@ function parse_mode() {
 }
 
 function args() {
-    local options=$(getopt -o hf:o:m:dsrt: --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,raw,notif-timeout: -- "$@")
+    local options=$(getopt -o hf:o:m:dsFr:t: --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,freeze,raw,notif-timeout: -- "$@")
     eval set -- "$options"
 
     while true; do
@@ -237,6 +255,9 @@ function args() {
                 ;;
             -d | --debug)
                 DEBUG=1
+                ;;
+            -F | --freeze)
+                FREEZE=1
                 ;;
             -s | --silent)
                 SILENT=1
@@ -273,6 +294,7 @@ SILENT=0
 RAW=0
 NOTIF_TIMEOUT=5000
 CURRENT=0
+FREEZE=0
 [ -z "$XDG_PICTURES_DIR" ] && type xdg-user-dir &> /dev/null && XDG_PICTURES_DIR=$(xdg-user-dir PICTURES)
 FILENAME="$(date +'%Y-%m-%d-%H%M%S_hyprshot.png')"
 [ -z "$HYPRSHOT_DIR" ] && SAVEDIR=${XDG_PICTURES_DIR:=~} || SAVEDIR=${HYPRSHOT_DIR}
@@ -281,4 +303,4 @@ args $0 "$@"
 
 SAVE_FULLPATH="$SAVEDIR/$FILENAME"
 [ $CLIPBOARD -eq 0 ] && Print "Saving in: %s\n" "$SAVE_FULLPATH"
-begin_grab $OPTION
+begin_grab $OPTION & checkRunning
