@@ -23,6 +23,10 @@ You can install the [hyprshot](https://aur.archlinux.org/packages/hyprshot) pack
 - wl-clipboard (to copy screenshot to clipboard)
 - libnotify (to get notified when a screenshot is saved)
 
+### Optional Dependencies
+
+- hyprpicker (to freeze the screen contents with the `--freeze` flag)
+
 ### Manual
 
 To install manually, simply clone this repo and copy/symlink the `hyprshot` script to a folder in your `PATH`:
