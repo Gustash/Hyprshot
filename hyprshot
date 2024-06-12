@@ -20,6 +20,7 @@ Options:
   -m, --mode                one of: output, window, region, active, OUTPUT_NAME
   -o, --output-folder       directory in which to save screenshot
   -f, --filename            the file name of the resulting screenshot
+  -D, --delay		    how long to delay taking the screenshot after selection
   -z, --freeze              freeze the screen on initialization
   -d, --debug               print debug information
   -s, --silent              don't send notification when screenshot is saved
@@ -168,6 +169,7 @@ function begin_grab() {
 	    geometry=`trim "${geometry}"`
             ;;
     esac
+    sleep ${DELAY:-0}
     save_geometry "${geometry}"
 }
 
@@ -232,7 +234,7 @@ function parse_mode() {
 }
 
 function args() {
-    local options=$(getopt -o hf:o:m:dszr:t: --long help,filename:,output-folder:,mode:,clipboard-only,debug,silent,freeze,raw,notif-timeout: -- "$@")
+    local options=$(getopt -o hf:o:m:D:dszr:t: --long help,filename:,output-folder:,mode:,delay:,clipboard-only,debug,silent,freeze,raw,notif-timeout: -- "$@")
     eval set -- "$options"
 
     while true; do
@@ -248,6 +250,10 @@ function args() {
             -f | --filename)
                 shift;
                 FILENAME=$1
+                ;;
+            -D | --delay)
+		shift;
+                DELAY=$1
                 ;;
             -m | --mode)
                 shift;
