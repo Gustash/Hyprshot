@@ -20,7 +20,7 @@ Options:
   -m, --mode                one of: output, window, region, active, OUTPUT_NAME
   -o, --output-folder       directory in which to save screenshot
   -f, --filename            the file name of the resulting screenshot
-  -D, --delay		    how long to delay taking the screenshot after selection
+  -D, --delay               how long to delay taking the screenshot after selection (seconds)
   -z, --freeze              freeze the screen on initialization
   -d, --debug               print debug information
   -s, --silent              don't send notification when screenshot is saved
