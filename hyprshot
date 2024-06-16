@@ -169,7 +169,9 @@ function begin_grab() {
 	    geometry=`trim "${geometry}"`
             ;;
     esac
-    sleep ${DELAY:-0}
+    if [ ${DELAY} -gt 0 ] 2>/dev/null; then
+        sleep ${DELAY}
+    fi
     save_geometry "${geometry}"
 }
 
