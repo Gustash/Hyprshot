@@ -96,7 +96,7 @@ Take a screenshot of a window by using `MOD + PrintScr`
 
 Take a screenshot of a monitor by using `PrintScr`
 
-Take a screenshot of a region by using `MOD + Shift + PrintScr`
+Take a screenshot of a region by using `Shift + PrintScr`
 
 ## Save location
 
