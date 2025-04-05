@@ -40,6 +40,7 @@ Activate wayland overlay as described in [README](https://github.com/bsd-ac/wayl
 ### Optional Dependencies
 
 - hyprpicker (to freeze the screen contents with the `--freeze` flag)
+- yad (to be able to use the GUI mode)
 
 ### Manual
 

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+CHOICE=$(yad --form --title="Hyprshot" --text="<b>Select Screenshot Mode</b>" \
+    --field="Mode:CB" "window!active window!output!region!selected monitor" \
+    --field="Delay (seconds):NUM" 0 \
+    --field="📋 Clipboard only:CHK" FALSE \
+    --button="🎯 Capture":0 --button="❌ Cancel":1 \
+    --undecorated --borders=20 --fixed)
+
+# Exit if the user cancels
+if [[ $? -ne 0 ]]; then
+    exit 1
+fi
+
+MODE=$(echo "$CHOICE" | cut -d'|' -f1)
+DELAY=$(echo "$CHOICE" | cut -d'|' -f2)
+CLIPBOARD=$(echo "$CHOICE" | cut -d'|' -f3)
+
+case $MODE in
+    "active window") MODE="-m window -m active" ;;
+    "selected monitor") MODE="-m output -m $(hyprctl monitors -j | jq -r '.[0].name')" ;;
+    *) MODE="-m $MODE" ;;
+esac
+
+while [ $DELAY -gt 0 ]; do
+    echo $((DELAY * 100 / 60))
+    sleep 1
+    DELAY=$((DELAY - 1))
+done | yad --progress --title="Hyprshot Delay" --text="Time remaining:" --percentage=0 --auto-close --fixed
+
+if [[ "$CLIPBOARD" == "TRUE" ]]; then
+    hyprshot $MODE --clipboard-only
+else
+    hyprshot $MODE
+fi

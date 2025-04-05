@@ -254,7 +254,7 @@ function args() {
                 FILENAME=$1
                 ;;
             -D | --delay)
-		shift;
+                shift;
                 DELAY=$1
                 ;;
             -m | --mode)
