@@ -142,9 +142,10 @@ function checkRunning() {
 
 function begin_grab() {
     if [ $FREEZE -eq 1 ] && [ "$(command -v "hyprpicker")" ] >/dev/null 2>&1; then
-        hyprpicker -r -z &
-        sleep 0.2
-        HYPRPICKER_PID=$!
+        while ! pgrep -x "hyprpicker" > /dev/null; do
+            hyprpicker -r -z &
+            HYPRPICKER_PID=$!
+        done
     fi
     local option=$1
     case $option in
