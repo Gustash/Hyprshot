@@ -32,7 +32,7 @@ Activate wayland overlay as described in [README](https://github.com/bsd-ac/wayl
 
 - hyprland (this one should be obvious)
 - jq (to parse and manipulate json)
-- grim (to take the screenshot)
+- grim or wayshot (to take the screenshot)
 - slurp (to select what to screenshot)
 - wl-clipboard (to copy screenshot to clipboard)
 - libnotify (to get notified when a screenshot is saved)
@@ -40,6 +40,7 @@ Activate wayland overlay as described in [README](https://github.com/bsd-ac/wayl
 ### Optional Dependencies
 
 - hyprpicker (to freeze the screen contents with the `--freeze` flag)
+- satty or swappy (to pass the capture to be annotated on `-a, --annotate`)
 
 ### Manual
 
