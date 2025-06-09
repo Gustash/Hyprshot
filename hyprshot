@@ -54,12 +54,19 @@ function send_notification() {
         return 0
     fi
 
-    local message=$([ $CLIPBOARD -eq 1 ] && \
-        echo "Image copied to the clipboard" || \
+    local message=$([ $CLIPBOARD -eq 1 ] &&
+        echo "Image copied to the clipboard" ||
         echo "Image saved in <i>${1}</i> and copied to the clipboard.")
-    notify-send "Screenshot saved" \
-                "${message}" \
-                -t "$NOTIF_TIMEOUT" -i "${1}" -a Hyprshot
+
+    action_option=""
+    command -v xdg-open &>/dev/null && action_option="--action=open_file=Open"
+
+    local action=$(notify-send "Screenshot saved" \
+        "${message}" \
+        -t "$NOTIF_TIMEOUT" -i "${1}" -a Hyprshot \
+        "$action_option")
+
+    [[ $action_option != "" && $action == "open_file" ]] && xdg-open "$1" &
 }
 
 function trim() {
