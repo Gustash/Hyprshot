@@ -40,6 +40,7 @@ Activate wayland overlay as described in [README](https://github.com/bsd-ac/wayl
 ### Optional Dependencies
 
 - hyprpicker (to freeze the screen contents with the `--freeze` flag)
+- xdg-utils (to open image file in the default image viewer in response to a configured notification action.)
 
 ### Manual
 
