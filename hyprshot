@@ -186,13 +186,13 @@ function grab_active_output() {
     Print "Active workspace: %s\n" "$active_workspace"
     local current_monitor="$(echo $monitors | jq -r 'first(.[] | select(.activeWorkspace.id == '$(echo $active_workspace | jq -r '.id')'))')"
     Print "Current output: %s\n" "$current_monitor"
-    echo $current_monitor | jq -r '"\(.x),\(.y) \(.width/.scale|round)x\(.height/.scale|round)"'
+    echo $current_monitor | jq -r 'if (.transform % 2 == 0) then "\(.x),\(.y) \((.width / .scale | round))x\((.height / .scale | round))" else "\(.x),\(.y) \((.height / .scale | round))x\((.width / .scale | round))" end'
 }
 
 function grab_selected_output() {
     local monitor=`hyprctl -j monitors | jq -r '.[] | select(.name == "'$(echo $1)'")'`
     Print "Capturing: %s\n" "${1}"
-    echo $monitor | jq -r '"\(.x),\(.y) \(.width/.scale|round)x\(.height/.scale|round)"'
+    echo $monitor | jq -r 'if (.transform % 2 == 0) then "\(.x),\(.y) \((.width / .scale | round))x\((.height / .scale | round))" else "\(.x),\(.y) \((.height / .scale | round))x\((.width / .scale | round))" end'
 }
 
 function grab_region() {
