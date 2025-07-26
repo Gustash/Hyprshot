@@ -67,16 +67,16 @@ function trim() {
     local geometry="${1}"
     local xy_str=$(echo "${geometry}" | cut -d' ' -f1)
     local wh_str=$(echo "${geometry}" | cut -d' ' -f2)
-    local x=`echo "${xy_str}" | cut -d',' -f1`
-    local y=`echo "${xy_str}" | cut -d',' -f2`
-    local width=`echo "${wh_str}" | cut -dx -f1`
-    local height=`echo "${wh_str}" | cut -dx -f2`
+	local x=$(echo "${xy_str}" | cut -d',' -f1)
+	local y=$(echo "${xy_str}" | cut -d',' -f2)
+	local width=$(echo "${wh_str}" | cut -dx -f1)
+	local height=$(echo "${wh_str}" | cut -dx -f2)
 
-    local max_width=`hyprctl monitors -j | jq -r '[.[] | if (.transform % 2 == 0) then (.x + .width) else (.x + .height) end] | max'`
-    local max_height=`hyprctl monitors -j | jq -r '[.[] | if (.transform % 2 == 0) then (.y + .height) else (.y + .width) end] | max'`
+	local max_width=$(hyprctl monitors -j | jq -r '[.[] | if (.transform % 2 == 0) then (.x + .width) else (.x + .height) end] | max')
+	local max_height=$(hyprctl monitors -j | jq -r '[.[] | if (.transform % 2 == 0) then (.y + .height) else (.y + .width) end] | max')
 
-    local min_x=`hyprctl monitors -j | jq -r '[.[] | (.x)] | min'`
-    local min_y=`hyprctl monitors -j | jq -r '[.[] | (.y)] | min'`
+	local min_x=$(hyprctl monitors -j | jq -r '[.[] | (.x)] | min')
+	local min_y=$(hyprctl monitors -j | jq -r '[.[] | (.y)] | min')
 
     local cropped_x=$x
     local cropped_y=$y
@@ -99,9 +99,9 @@ function trim() {
         cropped_height=$((cropped_height + y - min_y))
     fi
 
-    local cropped=`printf "%s,%s %sx%s\n" \
+    local cropped=$(printf "%s,%s %sx%s\n" \
         "${cropped_x}" "${cropped_y}" \
-        "${cropped_width}" "${cropped_height}"`
+        "${cropped_width}" "${cropped_height}")
     Print "Crop: %s\n" "${cropped}"
     echo ${cropped}
 }
@@ -150,23 +150,23 @@ function begin_grab() {
     case $option in
         output)
             if [ $CURRENT -eq 1 ]; then
-                local geometry=`grab_active_output`
+				local geometry=$(grab_active_output)
             elif [ -z $SELECTED_MONITOR ]; then
-                local geometry=`grab_output`
+				local geometry=$(grab_output)
             else
-                local geometry=`grab_selected_output $SELECTED_MONITOR`
+				local geometry=$(grab_selected_output $SELECTED_MONITOR)
             fi
             ;;
         region)
-            local geometry=`grab_region`
+			local geometry=$(grab_region)
             ;;
         window)
             if [ $CURRENT -eq 1 ]; then
-                local geometry=`grab_active_window`
+				local geometry=$(grab_active_window)
             else
-                local geometry=`grab_window`
+				local geometry=$(grab_window)
             fi
-	    geometry=`trim "${geometry}"`
+	    geometry=$(trim "${geometry}")
             ;;
     esac
     if [ ${DELAY} -gt 0 ] 2>/dev/null; then
@@ -180,17 +180,17 @@ function grab_output() {
 }
 
 function grab_active_output() {
-    local active_workspace=`hyprctl -j activeworkspace`
-    local monitors=`hyprctl -j monitors`
+	local active_workspace=$(hyprctl -j activeworkspace)
+	local monitors=$(hyprctl -j monitors)
     Print "Monitors: %s\n" "$monitors"
     Print "Active workspace: %s\n" "$active_workspace"
-    local current_monitor="$(echo $monitors | jq -r 'first(.[] | select(.activeWorkspace.id == '$(echo $active_workspace | jq -r '.id')'))')"
+    local current_monitor=$(echo "$monitors" | jq -r 'first(.[] | select(.activeWorkspace.id == '$(echo "$active_workspace" | jq -r '.id')'))')
     Print "Current output: %s\n" "$current_monitor"
-    echo $current_monitor | jq -r '"\(.x),\(.y) \(.width/.scale|round)x\(.height/.scale|round)"'
+    echo "$current_monitor" | jq -r '"\(.x),\(.y) \(.width/.scale|round)x\(.height/.scale|round)"'
 }
 
 function grab_selected_output() {
-    local monitor=`hyprctl -j monitors | jq -r '.[] | select(.name == "'$(echo $1)'")'`
+	local monitor=$(hyprctl -j monitors | jq -r '.[] | select(.name == "'$(echo $1)'")')
     Print "Capturing: %s\n" "${1}"
     echo $monitor | jq -r '"\(.x),\(.y) \(.width/.scale|round)x\(.height/.scale|round)"'
 }
@@ -200,20 +200,20 @@ function grab_region() {
 }
 
 function grab_window() {
-    local monitors=`hyprctl -j monitors`
-    local clients=`hyprctl -j clients | jq -r '[.[] | select(.workspace.id | contains('$(echo $monitors | jq -r 'map(.activeWorkspace.id) | join(",")')'))]'`
+	local monitors=$(hyprctl -j monitors)
+	local clients=$(hyprctl -j clients | jq -r '[.[] | select(.workspace.id | contains('$(echo "$monitors" | jq -r 'map(.activeWorkspace.id) | join(",")')'))]')
     Print "Monitors: %s\n" "$monitors"
     Print "Clients: %s\n" "$clients"
     # Generate boxes for each visible window and send that to slurp
     # through stdin
-    local boxes="$(echo $clients | jq -r '.[] | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1]) \(.title)"' | cut -f1,2 -d' ')"
+    local boxes=$(echo "$clients" | jq -r '.[] | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1]) \(.title)"' | cut -f1,2 -d' ')
     Print "Boxes:\n%s\n" "$boxes"
     slurp -r <<< "$boxes"
 }
 
 function grab_active_window() {
-    local active_window=`hyprctl -j activewindow`
-    local box=$(echo $active_window | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"' | cut -f1,2 -d' ')
+	local active_window=$(hyprctl -j activewindow)
+    local box=$(echo "$active_window" | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"' | cut -f1,2 -d' ')
     Print "Box:\n%s\n" "$box"
     echo "$box"
 }
