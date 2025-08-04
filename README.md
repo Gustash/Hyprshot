@@ -18,7 +18,10 @@ It allows taking screenshots of windows, regions and monitors which are saved to
 
 ### Arch Linux
 
-You can install the [hyprshot](https://aur.archlinux.org/packages/hyprshot) package in AUR.
+You can install hyprshot using pacman
+```shell
+# sudo pacman -S hyprshot
+```
 
 ### Gentoo Linux
 
