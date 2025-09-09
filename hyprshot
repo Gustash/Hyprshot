@@ -25,7 +25,7 @@ Options:
   -d, --debug               print debug information
   -s, --silent              don't send notification when screenshot is saved
   -r, --raw                 output raw image data to stdout
-  -t, --notif-timeout       notification timeout in milliseconds (default 5000)
+  -t, --notif-timeout       notification timeout in milliseconds (default is 5000, system setting if 0)
   --clipboard-only          copy screenshot to clipboard and don't save image in disk
   -- [command]              open screenshot with a command of your choosing. e.g. hyprshot -m window -- mirage
 
@@ -55,11 +55,25 @@ function send_notification() {
     fi
 
     local message=$([ $CLIPBOARD -eq 1 ] && \
-        echo "Image copied to the clipboard" || \
-        echo "Image saved in <i>${1}</i> and copied to the clipboard.")
-    notify-send "Screenshot saved" \
+        echo "Screenshot copied to the clipboard." || \
+        echo "Screenshot saved to <i>${1}</i> and copied to the clipboard.")
+    
+    local icon
+    if [ $CLIPBOARD -eq 1 ]; then
+        icon="dialog-information"
+    else
+        icon="${1}"
+    fi    
+
+    if [ $NOTIF_TIMEOUT -gt 0 ]; then
+        notify-send -u low "Hyprshot: Screenshot saved" \
                 "${message}" \
-                -t "$NOTIF_TIMEOUT" -i "${1}" -a Hyprshot
+                -t "$NOTIF_TIMEOUT" -i "$icon" -a Hyprshot 
+    else
+        notify-send -u low -i dialog-information "Hyprshot: Screenshot saved" \
+                "${message}" \
+                -i "$icon" -a Hyprshot
+    fi
 }
 
 function trim() {
