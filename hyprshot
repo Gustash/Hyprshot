@@ -133,10 +133,12 @@ function save_geometry() {
 function checkRunning() {
     sleep 1
     while [[ 1 == 1 ]]; do
-        if [[ $(pgrep slurp | wc -m) == 0 ]]; then
+        set +e
+        if ! pgrep slurp > /dev/null; then
             pkill hyprpicker
-            exit
+            exit 0
         fi
+        set -e
     done
 }
 
