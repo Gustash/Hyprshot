@@ -1,6 +1,6 @@
 # Hyprshot
 
-[![AUR version](https://img.shields.io/aur/version/hyprshot?label=hyprshot&logo=arch+linux)](https://aur.archlinux.org/packages/hyprshot)
+[![AUR version](https://img.shields.io/archlinux/v/extra/any/hyprshot)](https://archlinux.org/packages/extra/any/hyprshot/)
 [![AUR git version](https://img.shields.io/aur/version/hyprshot-git?label=hyprshot-git&logo=arch+linux)](https://aur.archlinux.org/packages/hyprshot-git)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/Gustash/hyprshot?color=green&logo=github)](https://github.com/Gustash/hyprshot/releases/latest)
 
