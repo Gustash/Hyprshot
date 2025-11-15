@@ -21,6 +21,8 @@ Options:
   -o, --output-folder       directory in which to save screenshot
   -f, --filename            the file name of the resulting screenshot
   -D, --delay               how long to delay taking the screenshot after selection (seconds)
+  -P, --pre-hook            script to run before screenshot attempt
+  -p, --post-hook           script to run after screenshot attempt
   -z, --freeze              freeze the screen on initialization
   -d, --debug               print debug information
   -s, --silent              don't send notification when screenshot is saved
@@ -146,6 +148,11 @@ function begin_grab() {
         sleep 0.2
         HYPRPICKER_PID=$!
     fi
+
+    if [ "$PRE_HOOK_SCRIPT" != "" ]; then
+      bash "$PRE_HOOK_SCRIPT"
+    fi
+
     local option=$1
     case $option in
         output)
@@ -169,10 +176,15 @@ function begin_grab() {
 	    geometry=`trim "${geometry}"`
             ;;
     esac
+
     if [ ${DELAY} -gt 0 ] 2>/dev/null; then
         sleep ${DELAY}
     fi
     save_geometry "${geometry}"
+
+    if [ "$POST_HOOK_SCRIPT" != "" ]; then
+      bash "$POST_HOOK_SCRIPT"
+    fi
 }
 
 function grab_output() {
@@ -236,7 +248,7 @@ function parse_mode() {
 }
 
 function args() {
-    local options=$(getopt -o hf:o:m:D:dszr:t: --long help,filename:,output-folder:,mode:,delay:,clipboard-only,debug,silent,freeze,raw,notif-timeout: -- "$@")
+    local options=$(getopt -o hf:o:m:D:p:P:dszr:t: --long help,filename:,output-folder:,mode:,delay:,pre-hook-script:,post-hook-script:,clipboard-only,debug,silent,freeze,raw,notif-timeout: -- "$@")
     eval set -- "$options"
 
     while true; do
@@ -280,6 +292,14 @@ function args() {
                 shift;
                 NOTIF_TIMEOUT=$1
                 ;;
+            -P | --pre-hook)
+              shift;
+              PRE_HOOK_SCRIPT="$1"
+              ;;
+            -p | --post-hook)
+              shift;
+              POST_HOOK_SCRIPT="$1"
+              ;;
             --)
                 shift # Skip -- argument
                 COMMAND=${@:2}
@@ -306,6 +326,8 @@ RAW=0
 NOTIF_TIMEOUT=5000
 CURRENT=0
 FREEZE=0
+PRE_HOOK_SCRIPT=""
+POST_HOOK_SCRIPT=""
 [ -z "$XDG_PICTURES_DIR" ] && type xdg-user-dir &> /dev/null && XDG_PICTURES_DIR=$(xdg-user-dir PICTURES)
 FILENAME="$(date +'%Y-%m-%d-%H%M%S_hyprshot.png')"
 [ -z "$HYPRSHOT_DIR" ] && SAVEDIR=${XDG_PICTURES_DIR:=~} || SAVEDIR=${HYPRSHOT_DIR}
