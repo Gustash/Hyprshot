@@ -254,7 +254,7 @@ function args() {
                 FILENAME=$1
                 ;;
             -D | --delay)
-		shift;
+		        shift;
                 DELAY=$1
                 ;;
             -m | --mode)
@@ -310,7 +310,7 @@ FREEZE=0
 FILENAME="$(date +'%Y-%m-%d-%H%M%S_hyprshot.png')"
 [ -z "$HYPRSHOT_DIR" ] && SAVEDIR=${XDG_PICTURES_DIR:=~} || SAVEDIR=${HYPRSHOT_DIR}
 
-args $0 "$@"
+args "$@"
 
 SAVE_FULLPATH="$SAVEDIR/$FILENAME"
 [ $CLIPBOARD -eq 0 ] && Print "Saving in: %s\n" "$SAVE_FULLPATH"
