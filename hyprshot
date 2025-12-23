@@ -110,6 +110,10 @@ function save_geometry() {
     local geometry="${1}"
     local output=""
 
+    if ! grep -Pq '^\d+,\d+\s+\d+x\d+$' <<< "$geometry"; then
+        return 1
+    fi
+
     if [ $RAW -eq 1 ]; then
         grim -g "${geometry}" -
         return 0
