@@ -20,6 +20,10 @@ It allows taking screenshots of windows, regions and monitors which are saved to
 
 You can install the [hyprshot](https://aur.archlinux.org/packages/hyprshot) package in AUR.
 
+```bash
+sudo pacman -S hyprshot
+```
+
 ### Gentoo Linux
 
 Activate wayland overlay as described in [README](https://github.com/bsd-ac/wayland-desktop#activate-overlay-via-eselect-repository), allow **~amd64** keyword and then install it:
