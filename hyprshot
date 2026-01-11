@@ -196,7 +196,7 @@ function grab_selected_output() {
 }
 
 function grab_region() {
-    slurp -d
+    slurp -d -w 0
 }
 
 function grab_window() {
