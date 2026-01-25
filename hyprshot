@@ -22,6 +22,7 @@ Options:
   -f, --filename            the file name of the resulting screenshot
   -D, --delay               how long to delay taking the screenshot after selection (seconds)
   -z, --freeze              freeze the screen on initialization
+  -c, --hide-cursor         hide cursor in screenshot
   -d, --debug               print debug information
   -s, --silent              don't send notification when screenshot is saved
   -r, --raw                 output raw image data to stdout
@@ -172,7 +173,16 @@ function begin_grab() {
     if [ ${DELAY} -gt 0 ] 2>/dev/null; then
         sleep ${DELAY}
     fi
+    if [ $HIDE_CURSOR -eq 1 ]; then
+        # move cursor off screen while storing the previous position
+        CURSOR_POS=$(hyprctl cursorpos)
+        hyprctl dispatch movecursor 99999 99999 >/dev/null
+    fi
     save_geometry "${geometry}"
+    if [ $HIDE_CURSOR -eq 1 ]; then
+        # return cursor to previous position
+        hyprctl dispatch movecursor ${CURSOR_POS//, / } >/dev/null
+    fi
 }
 
 function grab_output() {
@@ -236,7 +246,7 @@ function parse_mode() {
 }
 
 function args() {
-    local options=$(getopt -o hf:o:m:D:dszr:t: --long help,filename:,output-folder:,mode:,delay:,clipboard-only,debug,silent,freeze,raw,notif-timeout: -- "$@")
+    local options=$(getopt -o hf:o:m:D:dszcr:t: --long help,filename:,output-folder:,mode:,delay:,clipboard-only,debug,silent,freeze,raw,hide-cursor,notif-timeout: -- "$@")
     eval set -- "$options"
 
     while true; do
@@ -276,6 +286,9 @@ function args() {
             -r | --raw)
                 RAW=1
                 ;;
+            -c | --hide-cursor)
+                HIDE_CURSOR=1
+                ;;
             -t | --notif-timeout)
                 shift;
                 NOTIF_TIMEOUT=$1
@@ -306,6 +319,7 @@ RAW=0
 NOTIF_TIMEOUT=5000
 CURRENT=0
 FREEZE=0
+HIDE_CURSOR=0
 [ -z "$XDG_PICTURES_DIR" ] && type xdg-user-dir &> /dev/null && XDG_PICTURES_DIR=$(xdg-user-dir PICTURES)
 FILENAME="$(date +'%Y-%m-%d-%H%M%S_hyprshot.png')"
 [ -z "$HYPRSHOT_DIR" ] && SAVEDIR=${XDG_PICTURES_DIR:=~} || SAVEDIR=${HYPRSHOT_DIR}
