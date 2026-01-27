@@ -121,7 +121,7 @@ function save_geometry() {
         output="$SAVE_FULLPATH"
         wl-copy --type image/png < "$output"
         [ -z "$COMMAND" ] || {
-            "$COMMAND" "$output"
+            "${COMMAND[@]}" "$output"
         }
     else
         wl-copy --type image/png < <(grim -g "${geometry}" -)
@@ -282,7 +282,7 @@ function args() {
                 ;;
             --)
                 shift # Skip -- argument
-                COMMAND=${@:2}
+                COMMAND=("${@:2}")
                 break;;
         esac
         shift
