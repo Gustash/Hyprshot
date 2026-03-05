@@ -141,11 +141,28 @@ function checkRunning() {
     done
 }
 
+function hide_cursor_if_enabled() {
+    if [ $HIDE_CURSOR -eq 1 ]; then
+        # move cursor off screen while storing the previous position
+        CURSOR_POS=$(hyprctl cursorpos)
+        hyprctl dispatch movecursor 99999 99999 >/dev/null
+    fi
+}
+
+function show_cursor_if_enabled() {
+    if [ $HIDE_CURSOR -eq 1 ]; then
+        # return cursor to previous position
+        hyprctl dispatch movecursor ${CURSOR_POS//, / } >/dev/null
+    fi
+}
+
 function begin_grab() {
     if [ $FREEZE -eq 1 ] && [ "$(command -v "hyprpicker")" ] >/dev/null 2>&1; then
+        hide_cursor_if_enabled
         hyprpicker -r -z &
         sleep 0.2
         HYPRPICKER_PID=$!
+        show_cursor_if_enabled
     fi
     local option=$1
     case $option in
@@ -173,16 +190,9 @@ function begin_grab() {
     if [ ${DELAY} -gt 0 ] 2>/dev/null; then
         sleep ${DELAY}
     fi
-    if [ $HIDE_CURSOR -eq 1 ]; then
-        # move cursor off screen while storing the previous position
-        CURSOR_POS=$(hyprctl cursorpos)
-        hyprctl dispatch movecursor 99999 99999 >/dev/null
-    fi
+    hide_cursor_if_enabled
     save_geometry "${geometry}"
-    if [ $HIDE_CURSOR -eq 1 ]; then
-        # return cursor to previous position
-        hyprctl dispatch movecursor ${CURSOR_POS//, / } >/dev/null
-    fi
+    show_cursor_if_enabled
 }
 
 function grab_output() {
