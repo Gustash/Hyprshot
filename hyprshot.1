@@ -1,0 +1,47 @@
+.\" Man page for hyprshot
+.\" GNU General Public License
+.\" Original Author: Gustasch
+.\"
+.\" You may distribute under the terms of the GNU General Public
+.\" License
+.TH "Hyprshot" "1" "15. March 2026" "Gustash" "documentation"
+.SH "NAME "
+Hyprshot
+.SH "Synopsis "
+\fBhyprshot\fP [options ..] [\-m [mode] .. ] \-\- [command]
+.SH "DESCRIPTION "
+\fPhyprshot\fP is a screenshot application for the Hyprland desktop environment and window manager. It acts as a simplification of versions with grim and slurp, to make it easier to use.
+.SS "Options "
+.TP
+\fB\-h, \-\-help\fP
+show help message
+.TP
+\fB\-m, \-\-mode\fP
+chooses mode. Must be one of: output, window, region, active, OUTPUT_NAME
+.TP
+\fB\-o, \-\-output\-folder\fP
+directory in which to save the screenshot (temporary)
+.TP
+\fB\-f, \-\-filename\fP
+the file name of the resulting screenshot
+.TP
+\fB\-z, \-\-freeze\fP
+freeze the screen when taking the screenshot
+.TP
+\fB\-d, \-\-debug\fP
+print debug info
+.TP
+\fB\-s, \-\-silent\fP
+don't send a notification when screenshot is saved
+.TP
+\fB\-r, \-\-raw\fP
+output raw image data to stdout
+.TP
+\fB\-t, \-\-notif\-timeout\fP
+notification timeout in milliseconds (default 5000)
+.TP
+\fB\-\-clipboard\-only\fB
+copy screenshot to clipboard and don't save image in disk
+.TP
+\fB\-\- [command]\fP
+open screenshot with a command of your choosing. e.g. hyprshot \-m window \-\- mirage
