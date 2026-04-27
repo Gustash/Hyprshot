@@ -1,10 +1,10 @@
 # Hyprshot
 
-[![AUR version](https://img.shields.io/aur/version/hyprshot?label=hyprshot&logo=arch+linux)](https://aur.archlinux.org/packages/hyprshot)
+[![Arch Linux package](https://img.shields.io/archlinux/v/extra/any/hyprshot?label=hyprshot)](https://archlinux.org/packages/extra/any/hyprshot/)
 [![AUR git version](https://img.shields.io/aur/version/hyprshot-git?label=hyprshot-git&logo=arch+linux)](https://aur.archlinux.org/packages/hyprshot-git)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/Gustash/hyprshot?color=green&logo=github)](https://github.com/Gustash/hyprshot/releases/latest)
 
-Hyprshot is an utility to easily take screenshot in Hyprland using your mouse.
+Hyprshot is an utility to easily take screenshots in Hyprland using your mouse.
 
 It allows taking screenshots of windows, regions and monitors which are saved to a folder of your choosing and copied to your clipboard.
 
@@ -12,20 +12,21 @@ It allows taking screenshots of windows, regions and monitors which are saved to
 
 ### ALT Sisyphus
 
-```shell
-# apt-get install hyprshot
+```sh
+apt-get install hyprshot
 ```
 
 ### Arch Linux
-
-You can install the [hyprshot](https://aur.archlinux.org/packages/hyprshot) package in AUR.
+```sh
+pacman -S hyprshot
+```
 
 ### Gentoo Linux
 
 Activate wayland overlay as described in [README](https://github.com/bsd-ac/wayland-desktop#activate-overlay-via-eselect-repository), allow **~amd64** keyword and then install it:
 
-```bash
-# emerge --ask gui-apps/hyprshot
+```sh
+emerge --ask gui-apps/hyprshot
 ```
 
 ### Dependencies
@@ -45,32 +46,32 @@ Activate wayland overlay as described in [README](https://github.com/bsd-ac/wayl
 
 To install manually, simply clone this repo and copy/symlink the `hyprshot` script to a folder in your `PATH`:
 
-```bash
-$ git clone https://github.com/Gustash/hyprshot.git Hyprshot
-$ ln -s $(pwd)/Hyprshot/hyprshot $HOME/.local/bin
-$ chmod +x Hyprshot/hyprshot
+```sh
+git clone https://github.com/Gustash/hyprshot.git Hyprshot
+ln -s $(pwd)/Hyprshot/hyprshot $HOME/.local/bin
+chmod +x Hyprshot/hyprshot
 ```
 
 ## Usage
 
 You can get help on how to use hyprshot by executing:
 
-```bash
-$ hyprshot -h
+```sh
+hyprshot -h
 ```
 
 The simplest usage of Hyprshot is executing it with one of the available modes.
 
 For example, to screenshot an open window:
 
-```bash
-$ hyprshot -m window
+```sh
+hyprshot -m window
 ```
 
 You can also skip saving the screenshot to a file, copying it only to the clipboard:
 
-```bash
-$ hyprshot -m output --clipboard-only
+```sh
+hyprshot -m output --clipboard-only
 ```
 
 ## Configuration
