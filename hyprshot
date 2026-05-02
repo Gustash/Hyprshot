@@ -26,6 +26,7 @@ Options:
   -s, --silent              don't send notification when screenshot is saved
   -r, --raw                 output raw image data to stdout
   -t, --notif-timeout       notification timeout in milliseconds (default 5000)
+  -A, --notif-action <action>  add action to notification (format: id=label, can be used multiple times)
   --clipboard-only          copy screenshot to clipboard and don't save image in disk
   -- [command]              open screenshot with a command of your choosing. e.g. hyprshot -m window -- mirage
 
@@ -57,9 +58,19 @@ function send_notification() {
     local message=$([ $CLIPBOARD -eq 1 ] && \
         echo "Image copied to the clipboard" || \
         echo "Image saved in <i>${1}</i> and copied to the clipboard.")
+    
+    local action_flags=()
+    if [ ${#NOTIF_ACTIONS[@]} -eq 0 ]; then
+        action_flags+=(--action "open=xdg-open $1")
+    else
+        for action in "${NOTIF_ACTIONS[@]}"; do
+            action_flags+=(--action "$action")
+        done
+    fi
+
     notify-send "Screenshot saved" \
                 "${message}" \
-                -t "$NOTIF_TIMEOUT" -i "${1}" -a Hyprshot
+                -t "$NOTIF_TIMEOUT" -i "${1}" -a Hyprshot "${action_flags[@]}"
 }
 
 function trim() {
@@ -236,7 +247,7 @@ function parse_mode() {
 }
 
 function args() {
-    local options=$(getopt -o hf:o:m:D:dszr:t: --long help,filename:,output-folder:,mode:,delay:,clipboard-only,debug,silent,freeze,raw,notif-timeout: -- "$@")
+    local options=$(getopt -o hf:o:m:D:dszr:t:A: --long help,filename:,output-folder:,mode:,delay:,clipboard-only,debug,silent,freeze,raw,notif-timeout:,notif-action: -- "$@")
     eval set -- "$options"
 
     while true; do
@@ -280,6 +291,10 @@ function args() {
                 shift;
                 NOTIF_TIMEOUT=$1
                 ;;
+            -A | --notif-action)
+                shift
+                NOTIF_ACTIONS+=("$1")
+                ;;
             --)
                 shift # Skip -- argument
                 COMMAND=${@:2}
@@ -299,6 +314,7 @@ if [ -z $1 ]; then
     exit
 fi
 
+NOTIF_ACTIONS=()
 CLIPBOARD=0
 DEBUG=0
 SILENT=0
