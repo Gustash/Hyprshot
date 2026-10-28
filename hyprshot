@@ -63,6 +63,10 @@ function send_notification() {
 }
 
 function trim() {
+    if [ -z "${1}" ]; then
+        return 0
+    fi
+
     Print "Geometry: %s\n" "${1}"
     local geometry="${1}"
     local xy_str=$(echo "${geometry}" | cut -d' ' -f1)
@@ -109,6 +113,11 @@ function trim() {
 function save_geometry() {
     local geometry="${1}"
     local output=""
+
+    if [ -z "${geometry}" ]; then
+        [ $FREEZE -eq 1 ] && pkill hyprpicker
+        return 0
+    fi
 
     if [ $RAW -eq 1 ]; then
         grim -g "${geometry}" -
