@@ -201,7 +201,7 @@ function grab_region() {
 
 function grab_window() {
     local monitors=`hyprctl -j monitors`
-    local clients=`hyprctl -j clients | jq -r '[.[] | select(.workspace.id | contains('$(echo $monitors | jq -r 'map(.activeWorkspace.id) | join(",")')'))]'`
+    local clients=`hyprctl -j clients | jq -r '[.[] | select(.workspace.id != null and (.workspace.id | contains('$(echo $monitors | jq -r 'map(.activeWorkspace.id) | join(",")')')))]'`
     Print "Monitors: %s\n" "$monitors"
     Print "Clients: %s\n" "$clients"
     # Generate boxes for each visible window and send that to slurp
