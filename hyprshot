@@ -112,12 +112,14 @@ function save_geometry() {
 
     if [ $RAW -eq 1 ]; then
         grim -g "${geometry}" -
+        unfreeze
         return 0
     fi
 
     if [ $CLIPBOARD -eq 0 ]; then
         mkdir -p "$SAVEDIR"
         grim -g "${geometry}" "$SAVE_FULLPATH"
+        unfreeze
         output="$SAVE_FULLPATH"
         wl-copy --type image/png < "$output"
         [ -z "$COMMAND" ] || {
@@ -125,26 +127,29 @@ function save_geometry() {
         }
     else
         wl-copy --type image/png < <(grim -g "${geometry}" -)
+        unfreeze
     fi
 
     send_notification $output
 }
 
-function checkRunning() {
-    sleep 1
-    while [[ 1 == 1 ]]; do
-        if [[ $(pgrep slurp | wc -m) == 0 ]]; then
-            pkill hyprpicker
-            exit
-        fi
-    done
+# Stop the hyprpicker instance started by --freeze, if any.
+# Only called once grim has captured the frozen frame (or on exit), so the
+# screenshot always contains the frozen screen and never the live one.
+function unfreeze() {
+    if [ -n "$HYPRPICKER_PID" ]; then
+        kill "$HYPRPICKER_PID" 2>/dev/null || true
+        HYPRPICKER_PID=""
+    fi
 }
 
 function begin_grab() {
     if [ $FREEZE -eq 1 ] && [ "$(command -v "hyprpicker")" ] >/dev/null 2>&1; then
         hyprpicker -r -z &
-        sleep 0.2
         HYPRPICKER_PID=$!
+        # Also unfreeze if the selection is cancelled or anything fails
+        trap unfreeze EXIT
+        sleep 0.2
     fi
     local option=$1
     case $option in
@@ -170,6 +175,9 @@ function begin_grab() {
             ;;
     esac
     if [ ${DELAY} -gt 0 ] 2>/dev/null; then
+        # The delay is for capturing something that happens after selecting,
+        # so show the live screen again while waiting
+        unfreeze
         sleep ${DELAY}
     fi
     save_geometry "${geometry}"
@@ -306,6 +314,7 @@ RAW=0
 NOTIF_TIMEOUT=5000
 CURRENT=0
 FREEZE=0
+HYPRPICKER_PID=""
 [ -z "$XDG_PICTURES_DIR" ] && type xdg-user-dir &> /dev/null && XDG_PICTURES_DIR=$(xdg-user-dir PICTURES)
 FILENAME="$(date +'%Y-%m-%d-%H%M%S_hyprshot.png')"
 [ -z "$HYPRSHOT_DIR" ] && SAVEDIR=${XDG_PICTURES_DIR:=~} || SAVEDIR=${HYPRSHOT_DIR}
@@ -314,4 +323,4 @@ args $0 "$@"
 
 SAVE_FULLPATH="$SAVEDIR/$FILENAME"
 [ $CLIPBOARD -eq 0 ] && Print "Saving in: %s\n" "$SAVE_FULLPATH"
-begin_grab $OPTION & checkRunning
+begin_grab $OPTION
